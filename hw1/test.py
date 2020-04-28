@@ -17,7 +17,7 @@ scene0.set_ambient_light([0.5, 0.5, 0.5])
 scene0.set_shadow_light([0, 1, -1], [0.5, 0.5, 0.5])
 
 loader = scene0.create_urdf_loader()
-articulated_object = loader.load("assets/robot/panda_checkerboard.urdf")
+articulated_object = loader.load("assets/robot/panda.urdf")
 
 while not renderer_controller.should_quit:
     scene0.update_render()

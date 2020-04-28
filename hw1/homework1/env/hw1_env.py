@@ -8,31 +8,6 @@ from .stacking_env import StackingEnv
 import sapien.core as sapien
 import numpy as np
 from typing import List, Tuple, Sequence
-import cv2
-
-
-import matplotlib.pyplot as plt
-import open3d as o3d
-
-def Rodrigues(theta, w):
-    w = w.reshape((3,))
-    w = w / np.linalg.norm(w)
-
-    skew = np.zeros((3, 3))
-    skew[0, 1] = -w[2]
-    skew[0, 2] = w[1]
-    skew[1, 0] = w[2]
-    skew[1, 2] = -w[0]
-    skew[2, 0] = -w[1]
-    skew[2, 1] = w[0]
-    R = np.eye(3, dtype=np.float32) + np.sin(theta) * skew + (1 - np.cos(theta)) * np.dot(skew, skew)
-    return R
-
-def Rodrigues_1(mat):
-
-
-
-    pass
 
 
 class HW1Env(StackingEnv):
@@ -220,18 +195,17 @@ class HW1Env(StackingEnv):
             (4, 4) transformation matrix represent the same pose
 
         """
-
+        # QJ
+        q_w = pose.q[0]
+        q_xyz = np.expand_dims(pose.q[1:],axis=1)
+        q_xyz_hat = np.array([[0,-pose.q[3],pose.q[2]],
+                            [pose.q[3],0,-pose.q[1]],
+                            [-pose.q[2],pose.q[1],0]])
+        Eq = np.hstack((-q_xyz,q_w*np.eye(3)+q_xyz_hat))
+        Gq = np.hstack((-q_xyz,q_w*np.eye(3)-q_xyz_hat))
         T = np.eye(4)
-        q = pose.q
-        p = pose.p
-
-        T[:3, -1] = p
-
-        theta = 2 * np.arccos(q[0])
-        w = q[1:] / np.linalg.norm(q[1:])
-        R = Rodrigues(theta, w)
-
-        T[:3, :3] = R
+        T[:3,:3] = np.matmul(Eq,Gq.transpose())
+        T[:3,3] = pose.p
         return T
 
     def get_current_marker_pose(self) -> np.ndarray:
@@ -253,49 +227,39 @@ class HW1Env(StackingEnv):
 
         pattern_size = (3, 4)
         square_size = 0.012
-        h = pattern_size[0]
-        w = pattern_size[1]
 
-        # prepare 3D points
-        objp = np.zeros((h * w, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:h, 0:w].T.reshape(-1, 2)
-        objp *= square_size
-
-        image = (image * 255).astype(np.uint8)
-
-        # find 2D points
+        # QJ
+        import cv2
+        # Make sure to be 8-bit
+        image = np.array(image*255, dtype=np.uint8)
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        ret, corners = cv2.findChessboardCorners(gray.astype(np.uint8), (h, w), None)
-
-        if ret == 0:
-            return False, None
-
-        #mark corners
-        # img = cv2.drawChessboardCorners(image, pattern_size, corners, ret)
-        # plt.imshow(img)
-        # plt.show()
-
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objp], [corners], gray.shape[::-1], None, None)
-
-        if ret == 0:
-            return False, None
-
-        tvec = tvecs[0].reshape((3, ))
-        rvec = rvecs[0].reshape((3, ))
-
-        theta = np.linalg.norm(rvec).squeeze()
-
-        if theta != 0:
-            w = rvecs / theta
-            R = Rodrigues(theta, w)
-        else:
-            R = np.eye(3)
-
+        # Find the chess board corners
+        ret, corners = cv2.findChessboardCorners(image, pattern_size, None)
+        # Draw corners detection result
+        #cv2.drawChessboardCorners(image, pattern_size, corners, ret)
+        #cv2.imshow('img', image)
+        #cv2.waitKey(0)
+        #cv2.destroyAllWindows()
+        # Arrays to store object points and image points
+        objpoints = np.zeros((3*4,3), np.float32) # 3d point in real world space
+        objpoints[:,:2] = np.mgrid[0:3,3:-1:-1].T.reshape(-1,2)
+        objpoints[:,[0,1]] = objpoints[:,[1,0]]
+        #objpoints[:,0] -= 1.5
+        #bjpoints[:,1] -= 1
+        #objpoints[:,:2] = np.mgrid[0:3,0:4].T.reshape(-1,2)
+        objpoints *= square_size
+        imgpoints = corners # 2d points in image plane.
+        # Set known intrinsic matrix
+        camera_matrix = self.camera.get_camera_matrix()[:3, :3]
+        camera_distortion = np.zeros(4)
+        calibrate_flag = cv2.CALIB_USE_INTRINSIC_GUESS 
+        # With matching pairs, calculating intrinsic and extrinsic parameters
+        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objpoints], [imgpoints], image.shape[:2][::-1], camera_matrix, camera_distortion, flags=calibrate_flag)
+        # Define 4x4 SE(3) matrix
         T = np.eye(4)
-        T[:3, :3] = R
-        T[:3, -1] = tvec
-
-        return True, T
+        T[:3,:3],_ = cv2.Rodrigues(rvecs[0])
+        T[:3,3] = np.squeeze(tvecs[0])
+        return T
 
     def capture_calibration_data(self) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """You need to implement this function
@@ -313,29 +277,17 @@ class HW1Env(StackingEnv):
                      [0.1, 0, 0.2, -1.4, 0, 1.3, 0.6, 0.4, 0.4],
                      [0, 0.2, -0.1, -1.5, -0.3, 1.4, 0.9, 0.4, 0.4],
                      [0.1, 0.3, 0, -1.4, -0.2, 1.7, 0.85, 0.4, 0.4]]
-
-        print('>> Capturing data ...')
-
-        marker2cam_coll = []
-        ee2base_coll = []
-        for t, qpos in enumerate(qpos_list):
+        
+        # QJ
+        for qpos in qpos_list[0:4]:
             self.robot.set_qpos(qpos)
-            flag, T_m2c = self.get_current_marker_pose()
+            self.step()
+            T = self.get_current_marker_pose()
+            print("implemented",T)
+            T = self.board2cam_gt()
+            print("groundtruth",T)
 
-            gt = self.board2cam_gt()
-
-
-
-
-
-            T_e2b = self.get_current_ee_pose()
-
-            if flag:
-                print('Processing pair {} ...'.format(t))
-                marker2cam_coll.append(T_m2c)
-                ee2base_coll.append(T_e2b)
-
-        return marker2cam_coll, ee2base_coll
+        return 0
 
     @staticmethod
     def compute_cam2base(marker2cam_poses: List[np.ndarray], ee2base_poses: List[np.ndarray]) -> np.ndarray:
@@ -361,14 +313,6 @@ class HW1Env(StackingEnv):
 
         """
 
-        #todo calibration
-
-
-
-
-
-
-
         raise NotImplementedError
 
     @staticmethod
@@ -384,11 +328,14 @@ class HW1Env(StackingEnv):
             Distance scalar
 
         """
-        #todo calc distance of two transform matrix
+        # QJ
+        def hat(theta):
+            
 
-
-
-
+        R_diff1 = np.matmul(pose1.transpose(),pose2)
+        R_diff2 = np.matmul(pose2.transpose(),pose1)
+        
+        
 
 
         raise NotImplementedError
@@ -425,12 +372,4 @@ class HW1Env(StackingEnv):
 
         """
         point_cloud = self.get_object_point_cloud(seg_id)
-
-
-
-        #todo determine gripper location
-        #todo transform gripper into base frame using cam2base
-        #todo compute IK
-
-
         raise NotImplementedError
