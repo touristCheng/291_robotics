@@ -14,6 +14,20 @@ from typing import List, Tuple, Sequence
 #######################################
 import cv2
 
+def Rp2T(R,p):
+    """
+    Combine rotation and translation to SE(3)
+    Args:
+        R: SO(3) matrix
+        t: 3d vector
+    Returns:
+        T: SE(3) matrix
+    """ 
+    T = np.eye(4)    
+    T[:3,:3] = R 
+    T[:3,3] = np.squeeze(p)
+    return T
+
 def SE3inverse(T):
     """
     The inverse matrix for a SE(3) matrix
@@ -21,7 +35,7 @@ def SE3inverse(T):
         T: SE(3) matrix
     Returns:
         T_inv: SE(3) matrix
-    """       
+    """     
     R = T[:3,:3]
     p = T[:3,3]
     R_inv = R.transpose()
@@ -38,7 +52,8 @@ def SkewSymmetric(theta):
         theta: 3d vector
     Returns:
         R: 3x3 matrix
-    """        
+    """
+    theta = np.squeeze(theta)        
     R = np.array([[0,-theta[2],theta[1]],
                 [theta[2],0,-theta[0]],
                 [-theta[1],theta[0],0]])        
@@ -92,7 +107,70 @@ def J_L_inv(theta):
     R = np.eye(3) - 0.5*SkewSymmetric(theta) + ((1+np.cos(np.linalg.norm(theta)))/(np.linalg.norm(theta)- 1/(2*np.linalg.norm(theta)*np.sin(np.linalg.norm(theta))))**2)*np.matmul(SkewSymmetric(theta),SkewSymmetric(theta))
     return R
 
+def rot2quatMinimal(R):
+    """
+    Convert SO(3) rotation matrix into a modified Rodrigues formula,
+    which is the image part of the associated quaternion
+    q = 2 * sin(theta/2) * v
+    Args:
+        R: 3x3 rotation matrix
+    Returns:
+        q: 3d vector
+    """
+    assert R.shape[0]==3 and R.shape[1]==3
+    m00 = R[0,0]
+    m01 = R[0,1]
+    m02 = R[0,2]
+    m10 = R[1,0]
+    m11 = R[1,1]
+    m12 = R[1,2]
+    m20 = R[2,0]
+    m21 = R[2,1]
+    m22 = R[2,2]
+    trace = np.trace(R)
 
+    if trace > 0:
+        S = np.sqrt(trace + 1.0) * 2
+        qx = (m21 - m12) / S
+        qy = (m02 - m20) / S
+        qz = (m10 - m01) / S
+    elif (m00 > m11) and (m00 > m22):
+        S = np.sqrt(1.0 + m00 - m11 - m22) * 2
+        qx = 0.25 * S
+        qy = (m01 + m10) / S
+        qz = (m02 + m20) / S
+    elif (m11 > m22):
+        S = np.sqrt(1.0 + m11 - m00 - m22) * 2
+        qx = (m01 + m10) / S
+        qy = 0.25 * S
+        qz = (m12 + m21) / S
+    else:
+        S = np.sqrt(1.0 + m22 - m00 - m11) * 2
+        qx = (m02 + m20) / S
+        qy = (m12 + m21) / S
+        qz = 0.25 * S
+    q = np.array([qx,qy,qz])
+    q *= 2
+    return q
+
+def quatMinimal2rot(q):
+    """
+    Convert a modified Rodrigues formula back to SO(3) rotation matrix
+    Inverse of rot2quatMinimal()
+    Args:
+        q: 3d vector
+    Returns:
+        R: 3x3 rotation matrix
+    """   
+    q = np.squeeze(q)        
+    p = np.linalg.norm(q)**2
+    #w = np.sqrt(1 - p)
+    w = np.sqrt(4 - p)
+    diag_p = p*np.eye(3)
+    q = np.expand_dims(q,axis=1)
+    #R = np.eye(3) - 2*diag_p + 2*(np.matmul(q,q.transpose()) + w*SkewSymmetric(q))
+    R = np.eye(3) - 0.5*diag_p + 0.5*(np.matmul(q,q.transpose()) + w*SkewSymmetric(q))
+    return R
 #######################################
 # === Some useful functions above === #
 #######################################
@@ -381,6 +459,12 @@ class HW1Env(StackingEnv):
             T_ee2base = self.get_current_ee_pose()
             marker2cam_poses.append(T_marker2cam)
             ee2base_poses.append(T_ee2base)
+        
+        cam2base = self.compute_cam2base(marker2cam_poses,ee2base_poses)
+        print(cam2base)
+        print(self.cam2base_gt())
+        print(self.compute_pose_distance(self.cam2base_gt(), cam2base))
+        
         return marker2cam_poses, ee2base_poses
 
     @staticmethod
@@ -407,23 +491,76 @@ class HW1Env(StackingEnv):
 
         """
         # QJ
-        # Ref: https://github.com/opencv/opencv/blob/master/modules/calib3d/src/calibration_handeye.cpp#L268
+        # Paper ref: http://kmlee.gatech.edu/me6406/handeye.pdf
+        # Code ref: https://github.com/opencv/opencv/blob/master/modules/calib3d/src/calibration_handeye.cpp#L268
         R_base2ee = []
-        t_base2ee = []
+        p_base2ee = []
+        T_base2ee = []
         R_marker2cam = []
-        t_marker2cam = []
+        p_marker2cam = []
+        T_marker2cam = []
         for idx in range(len(marker2cam_poses)):
             base2ee = SE3inverse(ee2base_poses[idx])
-            marker2cam =marker2cam_poses[idx]
+            marker2cam = marker2cam_poses[idx]
             R_base2ee.append(base2ee[:3,:3])
-            t_base2ee.append(base2ee[:3,3])
+            p_base2ee.append(base2ee[:3,3])
+            T_base2ee.append(Rp2T(R_base2ee[-1],p_base2ee[-1]))
             R_marker2cam.append(marker2cam[:3,:3])
-            t_marker2cam.append(marker2cam[:3,3])
+            p_marker2cam.append(marker2cam[:3,3])
+            T_marker2cam.append(Rp2T(R_marker2cam[-1],p_marker2cam[-1]))
+        n_pairs = len(R_base2ee)
+        A1,B1,A2,B2 = [],[],[],[] 
+        # R_cg Step 1 eq (12)
+        for i in range(n_pairs):
+            for j in range(i,n_pairs):
+                # Build P_gij eq (6)
+                H_gij = np.matmul(SE3inverse(T_base2ee[j]),T_base2ee[i])
+                R_gij = H_gij[:3,:3]
+                P_gij = rot2quatMinimal(R_gij)
+                # Build P_cij eq (7)
+                H_cij = np.matmul(T_marker2cam[j],SE3inverse(T_marker2cam[i]))
+                R_cij = H_cij[:3,:3]
+                P_cij = rot2quatMinimal(R_cij)
+                # A1: left side. B1: right side
+                A1.append(SkewSymmetric(P_gij+P_cij))
+                B1.append(np.expand_dims(P_cij-P_gij,axis=1))
+        A1 = np.vstack(A1)
+        B1 = np.vstack(B1)
+        # pseudo-inverse solution
+        #P_cg_prime = np.linalg.inv((A1.transpose() @ A1)) @ A1.transpose() @ B1
+        # numpy least-squares
+        P_cg_prime = np.linalg.lstsq(A1,B1,rcond=None)[0]
+        # R_cg Step 3 eq (14)
+        P_cg = 2*P_cg_prime/np.sqrt(1+P_cg_prime.transpose()@P_cg_prime)
+        R_cg = quatMinimal2rot(P_cg)
+        # T_cg eq (15)
+        for i in range(n_pairs):
+            for j in range(i,n_pairs):
+                H_gij = np.matmul(SE3inverse(T_base2ee[j]),T_base2ee[i])
+                R_gij = H_gij[:3,:3]
+                T_gij = np.expand_dims(H_gij[:3,3],axis=1)
+                H_cij = np.matmul(T_marker2cam[j],SE3inverse(T_marker2cam[i]))
+                T_cij = np.expand_dims(H_cij[:3,3],axis=1)
+                # A2: left side. B2: right side
+                A2.append(R_gij-np.eye(3))
+                B2.append(R_cg@T_cij-T_gij)
+        A2 = np.vstack(A2)
+        B2 = np.vstack(B2)
+        # numpy least-squares
+        T_cg = np.linalg.lstsq(A2,B2,rcond=None)[0]
+        # Build SE(3) matrix
+        T = np.eye(4)
+        T[:3,:3] = R_cg
+        T[:3,3] = np.squeeze(T_cg)
+        
         # OpenCV implementation
-        R_cam2base,t_cam2base =	cv2.calibrateHandEye(R_base2ee,t_base2ee,R_marker2cam,t_marker2cam,method=cv2.CALIB_HAND_EYE_TSAI)
+        '''
+        R_cam2base,t_cam2base =	cv2.calibrateHandEye(R_base2ee,p_base2ee,R_marker2cam,p_marker2cam,method=cv2.CALIB_HAND_EYE_TSAI)
         T = np.eye(4)
         T[:3,:3] = R_cam2base
         T[:3,3] = np.squeeze(t_cam2base)
+        '''
+
         return T
 
     @staticmethod
