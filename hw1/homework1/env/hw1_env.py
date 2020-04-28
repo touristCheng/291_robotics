@@ -9,6 +9,74 @@ import sapien.core as sapien
 import numpy as np
 from typing import List, Tuple, Sequence
 
+#######################################
+# === Some useful functions below === #
+#######################################
+def SkewSymmetric(theta):
+    """
+    The skew-symmetric matrix for a 3D vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """        
+    R = np.array([[0,-theta[2],theta[1]],
+                [theta[2],0,-theta[0]],
+                [-theta[1],theta[0],0]])        
+    return R
+
+def SkewSymmetricinv(R):
+    """
+    The inverse skew-symmetric from a matrix to a 3D vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """        
+    theta = np.array([R[2,1],R[0,2],R[1,0]])        
+    return theta
+
+def dist_SO3(rot1,rot2): 
+    """
+    The distance between two rotation matrices in SO(3)
+    Args:
+        rot1,rot2: 3x3 matrix in SO(3)
+    Returns:
+        dist: non-negative scalar
+    """ 
+    R_diff = np.matmul(rot1.transpose(),rot2)
+    dist = np.arccos((np.trace(R_diff)-1)/2)
+    return dist
+
+def SO32rotvec(rot):
+    """
+    The logarithm 
+    Args:
+        rot: 3x3 matrix in SO(3)
+    Returns:
+        theta: 3d rotation vector
+    """     
+    norm = np.arccos((np.trace(rot)-1)/2)
+    direction = 1/(2*np.sin(norm))*np.array([rot[2,1]-rot[1,2],rot[0,2]-rot[2,0],rot[1,0]-rot[0,1]])
+    theta = direction*norm
+    theta_test = SkewSymmetricinv(norm/(2*np.sin(norm))*(rot-rot.transpose()))
+    return theta
+
+def J_L_inv(theta):
+    """
+    The inverse left Jacobian of a 3D rotation vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """   
+    R = np.eye(3) - 0.5*SkewSymmetric(theta) + ((1+np.cos(np.linalg.norm(theta)))/(np.linalg.norm(theta)- 1/(2*np.linalg.norm(theta)*np.sin(np.linalg.norm(theta))))**2)*np.matmul(SkewSymmetric(theta),SkewSymmetric(theta))
+    return R
+
+
+#######################################
+# === Some useful functions above === #
+#######################################
 
 class HW1Env(StackingEnv):
     def __init__(self, timestep: float):
@@ -198,9 +266,7 @@ class HW1Env(StackingEnv):
         # QJ
         q_w = pose.q[0]
         q_xyz = np.expand_dims(pose.q[1:],axis=1)
-        q_xyz_hat = np.array([[0,-pose.q[3],pose.q[2]],
-                            [pose.q[3],0,-pose.q[1]],
-                            [-pose.q[2],pose.q[1],0]])
+        q_xyz_hat = SkewSymmetric(q_xyz)
         Eq = np.hstack((-q_xyz,q_w*np.eye(3)+q_xyz_hat))
         Gq = np.hstack((-q_xyz,q_w*np.eye(3)-q_xyz_hat))
         T = np.eye(4)
@@ -236,25 +302,45 @@ class HW1Env(StackingEnv):
         # Find the chess board corners
         ret, corners = cv2.findChessboardCorners(image, pattern_size, None)
         # Draw corners detection result
-        #cv2.drawChessboardCorners(image, pattern_size, corners, ret)
-        #cv2.imshow('img', image)
-        #cv2.waitKey(0)
-        #cv2.destroyAllWindows()
-        # Arrays to store object points and image points
-        objpoints = np.zeros((3*4,3), np.float32) # 3d point in real world space
-        objpoints[:,:2] = np.mgrid[0:3,3:-1:-1].T.reshape(-1,2)
-        objpoints[:,[0,1]] = objpoints[:,[1,0]]
-        #objpoints[:,0] -= 1.5
-        #bjpoints[:,1] -= 1
-        #objpoints[:,:2] = np.mgrid[0:3,0:4].T.reshape(-1,2)
+        cv2.drawChessboardCorners(image, pattern_size, corners, ret)
+        cv2.imshow('img', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        # objpoints: 3d point in real world space
+        objpoints = np.zeros((3*4,3), np.float32) 
+        objpoints[:,1:3] = np.mgrid[0:3,0:4].T.reshape(-1,2)
+        objpoints[:,[1,2]] = objpoints[:,[2,1]]
+        # manually try these offsets
+        #objpoints[:,1] -= 2
+        #objpoints[:,2] += 2.5
+        objpoints[:,1] -= 1.5
+        objpoints[:,2] += 3
         objpoints *= square_size
-        imgpoints = corners # 2d points in image plane.
+        # imgpoints: 2d points in image plane
+        imgpoints = corners 
         # Set known intrinsic matrix
         camera_matrix = self.camera.get_camera_matrix()[:3, :3]
         camera_distortion = np.zeros(4)
         calibrate_flag = cv2.CALIB_USE_INTRINSIC_GUESS 
         # With matching pairs, calculating intrinsic and extrinsic parameters
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objpoints], [imgpoints], image.shape[:2][::-1], camera_matrix, camera_distortion, flags=calibrate_flag)
+        
+        # test: reprojection
+        imgpoints2, _ = cv2.projectPoints(objpoints, rvecs[0], tvecs[0], mtx, dist)
+        error = cv2.norm(imgpoints,imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+        print("reprojection error",error)
+        
+        # test: reprojection with gt
+        T_gt = self.board2cam_gt()
+        t_gt = T_gt[:3,3]
+        r_gt = SO32rotvec(T_gt[:3,:3])
+        imgpoints_gt, _ = cv2.projectPoints(objpoints, r_gt, t_gt, camera_matrix, camera_distortion)
+        for i in range(imgpoints_gt.shape[0]):
+            image = cv2.circle(image, (imgpoints_gt[i,0,0],imgpoints_gt[i,0,1]), 3, (0, 0, 255), -1)
+        cv2.imshow('img', image)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        
         # Define 4x4 SE(3) matrix
         T = np.eye(4)
         T[:3,:3],_ = cv2.Rodrigues(rvecs[0])
@@ -279,13 +365,16 @@ class HW1Env(StackingEnv):
                      [0.1, 0.3, 0, -1.4, -0.2, 1.7, 0.85, 0.4, 0.4]]
         
         # QJ
-        for qpos in qpos_list[0:4]:
+        for qpos in qpos_list:
             self.robot.set_qpos(qpos)
             self.step()
             T = self.get_current_marker_pose()
             print("implemented",T)
-            T = self.board2cam_gt()
-            print("groundtruth",T)
+            T_gt = self.board2cam_gt()
+            print("groundtruth",T_gt)
+            print("dist",self.compute_pose_distance(T_gt,T))
+            print("rotation dist",dist_SO3(T_gt[:3,:3],T[:3,:3]))
+            print("translation dist",np.linalg.norm(T_gt[:3,3]-T[:3,3]))
 
         return 0
 
@@ -329,16 +418,18 @@ class HW1Env(StackingEnv):
 
         """
         # QJ
-        def hat(theta):
-            
-
-        R_diff1 = np.matmul(pose1.transpose(),pose2)
-        R_diff2 = np.matmul(pose2.transpose(),pose1)
-        
-        
-
-
-        raise NotImplementedError
+        T_diff = np.matmul(pose1.transpose(),pose2)
+        R_diff = T_diff[:3,:3]
+        p_diff = T_diff[:3,3]
+        # edge cases: R_diff approx identity
+        if np.abs(np.trace(R_diff)-3) < 1e-2:
+            theta = np.zeros(3)
+            rho = p_diff
+        else:
+            theta = SO32rotvec(R_diff)
+            rho = np.matmul(J_L_inv(theta),p_diff)
+        dist = np.linalg.norm(np.hstack((theta,rho)))
+        return dist 
 
     def compute_grasp_qpos(self, cam2base: np.ndarray, seg_id: int) -> Sequence[float]:
         """You need to implement this function
