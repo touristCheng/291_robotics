@@ -12,6 +12,25 @@ from typing import List, Tuple, Sequence
 #######################################
 # === Some useful functions below === #
 #######################################
+import cv2
+
+def SE3inverse(T):
+    """
+    The inverse matrix for a SE(3) matrix
+    Args:
+        T: SE(3) matrix
+    Returns:
+        T_inv: SE(3) matrix
+    """       
+    R = T[:3,:3]
+    p = T[:3,3]
+    R_inv = R.transpose()
+    p_inv = -np.matmul(R_inv,p)
+    T_inv = np.eye(4)
+    T_inv[:3,:3] = R_inv 
+    T_inv[:3,3] = np.squeeze(p_inv)
+    return T_inv
+
 def SkewSymmetric(theta):
     """
     The skew-symmetric matrix for a 3D vector
@@ -45,7 +64,7 @@ def dist_SO3(rot1,rot2):
         dist: non-negative scalar
     """ 
     R_diff = np.matmul(rot1.transpose(),rot2)
-    dist = np.arccos((np.trace(R_diff)-1)/2)
+    dist = np.arccos(max(-1,min(1,(np.trace(R_diff)-1)/2)))
     return dist
 
 def SO32rotvec(rot):
@@ -295,56 +314,44 @@ class HW1Env(StackingEnv):
         square_size = 0.012
 
         # QJ
-        import cv2
-        # Make sure to be 8-bit
+        # Convert the image to be 8-bit
         image = np.array(image*255, dtype=np.uint8)
+        # Get gray-scale image
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # Find the chess board corners
-        ret, corners = cv2.findChessboardCorners(image, pattern_size, None)
-        # Draw corners detection result
-        cv2.drawChessboardCorners(image, pattern_size, corners, ret)
-        cv2.imshow('img', image)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        # objpoints: 3d point in real world space
-        objpoints = np.zeros((3*4,3), np.float32) 
-        objpoints[:,1:3] = np.mgrid[0:3,0:4].T.reshape(-1,2)
-        objpoints[:,[1,2]] = objpoints[:,[2,1]]
-        # manually try these offsets
-        #objpoints[:,1] -= 2
-        #objpoints[:,2] += 2.5
-        objpoints[:,1] -= 1.5
-        objpoints[:,2] += 3
-        objpoints *= square_size
-        # imgpoints: 2d points in image plane
-        imgpoints = corners 
-        # Set known intrinsic matrix
+        # Define the points in world frame (3D) with square_size
+        objp = np.zeros((pattern_size[0]*pattern_size[1],3), np.float32)
+        objp[:,:2] = np.mgrid[0:pattern_size[0],0:pattern_size[1]].T.reshape(-1,2)
+        objp *= square_size
+        # Detect corners in image coordiante (2D)
+        ret, corners = cv2.findChessboardCorners(gray,pattern_size,flags=cv2.CALIB_CB_ADAPTIVE_THRESH)
+        # Get known camera intrinsic parameters
         camera_matrix = self.camera.get_camera_matrix()[:3, :3]
         camera_distortion = np.zeros(4)
-        calibrate_flag = cv2.CALIB_USE_INTRINSIC_GUESS 
-        # With matching pairs, calculating intrinsic and extrinsic parameters
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objpoints], [imgpoints], image.shape[:2][::-1], camera_matrix, camera_distortion, flags=calibrate_flag)
+        # Solve a PnP problem with given intrinsic parameters
+        _, rvecs, tvecs, inliers = cv2.solvePnPRansac(objp, corners, camera_matrix, camera_distortion)
         
-        # test: reprojection
-        imgpoints2, _ = cv2.projectPoints(objpoints, rvecs[0], tvecs[0], mtx, dist)
-        error = cv2.norm(imgpoints,imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-        print("reprojection error",error)
-        
-        # test: reprojection with gt
-        T_gt = self.board2cam_gt()
-        t_gt = T_gt[:3,3]
-        r_gt = SO32rotvec(T_gt[:3,:3])
-        imgpoints_gt, _ = cv2.projectPoints(objpoints, r_gt, t_gt, camera_matrix, camera_distortion)
-        for i in range(imgpoints_gt.shape[0]):
-            image = cv2.circle(image, (imgpoints_gt[i,0,0],imgpoints_gt[i,0,1]), 3, (0, 0, 255), -1)
-        cv2.imshow('img', image)
+        # optional visualization scripts
+        '''
+        def draw(img, corners, imgpts):
+            corner = tuple(corners[0].ravel())
+            img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+            img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+            img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+            return img
+        axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
+        axis *= square_size
+        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, camera_matrix, camera_distortion)
+        img = draw(image,corners,imgpts)
+        cv2.imshow('img',img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+        '''
         
         # Define 4x4 SE(3) matrix
+        # Get the rotation (rvecs) and the translation (tvecs)
         T = np.eye(4)
-        T[:3,:3],_ = cv2.Rodrigues(rvecs[0])
-        T[:3,3] = np.squeeze(tvecs[0])
+        T[:3,:3],_ = cv2.Rodrigues(rvecs)
+        T[:3,3] = np.squeeze(tvecs)
         return T
 
     def capture_calibration_data(self) -> Tuple[List[np.ndarray], List[np.ndarray]]:
@@ -365,18 +372,16 @@ class HW1Env(StackingEnv):
                      [0.1, 0.3, 0, -1.4, -0.2, 1.7, 0.85, 0.4, 0.4]]
         
         # QJ
-        for qpos in qpos_list:
+        marker2cam_poses = []
+        ee2base_poses = []
+        for qpos in qpos_list[0:7]:
             self.robot.set_qpos(qpos)
             self.step()
-            T = self.get_current_marker_pose()
-            print("implemented",T)
-            T_gt = self.board2cam_gt()
-            print("groundtruth",T_gt)
-            print("dist",self.compute_pose_distance(T_gt,T))
-            print("rotation dist",dist_SO3(T_gt[:3,:3],T[:3,:3]))
-            print("translation dist",np.linalg.norm(T_gt[:3,3]-T[:3,3]))
-
-        return 0
+            T_marker2cam = self.get_current_marker_pose()
+            T_ee2base = self.get_current_ee_pose()
+            marker2cam_poses.append(T_marker2cam)
+            ee2base_poses.append(T_ee2base)
+        return marker2cam_poses, ee2base_poses
 
     @staticmethod
     def compute_cam2base(marker2cam_poses: List[np.ndarray], ee2base_poses: List[np.ndarray]) -> np.ndarray:
@@ -401,8 +406,25 @@ class HW1Env(StackingEnv):
             Transformation matrix from camera to base
 
         """
-
-        raise NotImplementedError
+        # QJ
+        # Ref: https://github.com/opencv/opencv/blob/master/modules/calib3d/src/calibration_handeye.cpp#L268
+        R_base2ee = []
+        t_base2ee = []
+        R_marker2cam = []
+        t_marker2cam = []
+        for idx in range(len(marker2cam_poses)):
+            base2ee = SE3inverse(ee2base_poses[idx])
+            marker2cam =marker2cam_poses[idx]
+            R_base2ee.append(base2ee[:3,:3])
+            t_base2ee.append(base2ee[:3,3])
+            R_marker2cam.append(marker2cam[:3,:3])
+            t_marker2cam.append(marker2cam[:3,3])
+        # OpenCV implementation
+        R_cam2base,t_cam2base =	cv2.calibrateHandEye(R_base2ee,t_base2ee,R_marker2cam,t_marker2cam,method=cv2.CALIB_HAND_EYE_TSAI)
+        T = np.eye(4)
+        T[:3,:3] = R_cam2base
+        T[:3,3] = np.squeeze(t_cam2base)
+        return T
 
     @staticmethod
     def compute_pose_distance(pose1: np.ndarray, pose2: np.ndarray) -> float:
@@ -418,11 +440,11 @@ class HW1Env(StackingEnv):
 
         """
         # QJ
-        T_diff = np.matmul(pose1.transpose(),pose2)
+        T_diff = np.matmul(np.linalg.inv(pose1),pose2)
         R_diff = T_diff[:3,:3]
         p_diff = T_diff[:3,3]
         # edge cases: R_diff approx identity
-        if np.abs(np.trace(R_diff)-3) < 1e-2:
+        if np.abs(np.trace(R_diff)-3) < 1e-1:
             theta = np.zeros(3)
             rho = p_diff
         else:
