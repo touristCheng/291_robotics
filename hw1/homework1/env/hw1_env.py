@@ -459,12 +459,6 @@ class HW1Env(StackingEnv):
             T_ee2base = self.get_current_ee_pose()
             marker2cam_poses.append(T_marker2cam)
             ee2base_poses.append(T_ee2base)
-        
-        cam2base = self.compute_cam2base(marker2cam_poses,ee2base_poses)
-        print(cam2base)
-        print(self.cam2base_gt())
-        print(self.compute_pose_distance(self.cam2base_gt(), cam2base))
-        
         return marker2cam_poses, ee2base_poses
 
     @staticmethod
@@ -621,5 +615,21 @@ class HW1Env(StackingEnv):
 
 
         """
+        # QJ
+        # Get object point cloud
         point_cloud = self.get_object_point_cloud(seg_id)
-        raise NotImplementedError
+        # Simply get the mean of the point cloud
+        obj_p = np.mean(point_cloud,axis=1)
+        # manually tested with different offsets
+        obj_p[0] -= 0.0
+        obj_p[1] -= 0.0
+        obj_p[2] -= 0.095
+        obj2cam = np.eye(4)
+        obj2cam[:3,3] = obj_p
+        # manually tested with different R
+        obj2cam[:3,:3] = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+        #obj2cam[:3,:3] = np.array([[0,1,0],[-1,0,0],[0,0,1]])
+        gripper_pose = cam2base@obj2cam
+        qpos = self.compute_ik(gripper_pose)[0]
+        qpos = qpos + [0.04, 0.04]
+        return qpos
