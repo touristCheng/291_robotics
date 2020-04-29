@@ -616,19 +616,23 @@ class HW1Env(StackingEnv):
 
         """
         # QJ
+        self.robot.set_qpos([-0.144,0.263,0.176,-2.641,0.048,2.774,0.624,0.04,0.04])
+        self.step()
+        #print(SE3inverse(cam2base)@self.get_current_ee_pose())
+
         # Get object point cloud
         point_cloud = self.get_object_point_cloud(seg_id)
         # Simply get the mean of the point cloud
         obj_p = np.mean(point_cloud,axis=1)
-        # manually tested with different offsets
-        obj_p[0] -= 0.0
-        obj_p[1] -= 0.0
-        obj_p[2] -= 0.095
         obj2cam = np.eye(4)
         obj2cam[:3,3] = obj_p
-        # manually tested with different R
-        obj2cam[:3,:3] = np.array([[0,-1,0],[1,0,0],[0,0,1]])
-        #obj2cam[:3,:3] = np.array([[0,1,0],[-1,0,0],[0,0,1]])
+        # manually tested with different R and p offsets
+        #obj2cam[:3,:3] = np.array([[0,-1,0],[1,0,0],[0,0,1]])
+        #obj2cam[:3,3] -= np.array([0,0,0.095])
+        obj2cam[:3,:3] = np.array([[ 0.13959368, -0.98842393,  0.05943362],
+                                [ 0.59127277,  0.13135001,  0.79570365],
+                                [-0.79429889, -0.07593369,  0.6027636]])
+        obj2cam[:3,3] -= np.array([0,0.08,0.05])
         gripper_pose = cam2base@obj2cam
         qpos = self.compute_ik(gripper_pose)[0]
         qpos = qpos + [0.04, 0.04]
