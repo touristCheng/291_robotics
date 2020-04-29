@@ -14,10 +14,7 @@ import cv2
 import matplotlib.pyplot as plt
 import open3d as o3d
 
-def Rodrigues(theta, w):
-    w = w.reshape((3,))
-    w = w / np.linalg.norm(w)
-
+def Skew(w):
     skew = np.zeros((3, 3))
     skew[0, 1] = -w[2]
     skew[0, 2] = w[1]
@@ -25,6 +22,14 @@ def Rodrigues(theta, w):
     skew[1, 2] = -w[0]
     skew[2, 0] = -w[1]
     skew[2, 1] = w[0]
+    return skew
+
+def Rodrigues(theta, w):
+    w = w.reshape((3,))
+    w = w / np.linalg.norm(w)
+
+    skew = Skew(w)
+
     R = np.eye(3, dtype=np.float32) + np.sin(theta) * skew + (1 - np.cos(theta)) * np.dot(skew, skew)
     return R
 
@@ -32,8 +37,44 @@ def Rodrigues_1(mat):
 
 
 
+
     pass
 
+def SkewSymmetricinv(R):
+    """
+    The inverse skew-symmetric from a matrix to a 3D vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """
+    theta = np.array([R[2,1],R[0,2],R[1,0]])
+    return theta
+
+def J_L_inv(theta):
+    """
+    The inverse left Jacobian of a 3D rotation vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """
+    R = np.eye(3) - 0.5*Skew(theta) + ((1+np.cos(np.linalg.norm(theta)))/(np.linalg.norm(theta)- 1/(2*np.linalg.norm(theta)*np.sin(np.linalg.norm(theta))))**2)*np.matmul(Skew(theta),Skew(theta))
+    return R
+
+def SO32rotvec(rot):
+    """
+    The logarithm
+    Args:
+        rot: 3x3 matrix in SO(3)
+    Returns:
+        theta: 3d rotation vector
+    """
+    norm = np.arccos((np.trace(rot)-1)/2)
+    direction = 1/(2*np.sin(norm))*np.array([rot[2,1]-rot[1,2],rot[0,2]-rot[2,0],rot[1,0]-rot[0,1]])
+    theta = direction*norm
+    theta_test = SkewSymmetricinv(norm/(2*np.sin(norm))*(rot-rot.transpose()))
+    return theta
 
 class HW1Env(StackingEnv):
     def __init__(self, timestep: float):
@@ -320,12 +361,13 @@ class HW1Env(StackingEnv):
         ee2base_coll = []
         for t, qpos in enumerate(qpos_list):
             self.robot.set_qpos(qpos)
-            flag, T_m2c = self.get_current_marker_pose()
+            self.step()
 
+            flag, T_m2c = self.get_current_marker_pose()
             gt = self.board2cam_gt()
 
-
-
+            dist = self.compute_pose_distance(T_m2c, gt)
+            print('dist: ', dist)
 
 
             T_e2b = self.get_current_ee_pose()
@@ -363,13 +405,43 @@ class HW1Env(StackingEnv):
 
         #todo calibration
 
+        def Tsai_sol(ABs):
+
+            a = []
+            b = []
+
+            for (A, B) in ABs:
+                R_a = A[:3, :3].copy()
+
+                w_a, v_a = np.linalg.eig(R_a)
+                ind_a = np.argmin(np.abs(np.real(w_a)-1.))
+                n_a = v_a[:, ind_a]
+
+                R_b = B[:3, :3].copy()
+                w_b, v_b = np.linalg.eig(R_b)
+                ind_b = np.argmin(np.abs(np.real(w_b)-1.))
+                n_b = v_b[:, ind_b]
+
+                a.append(Skew(n_a+n_b))
+                b.append(n_a-n_b)
 
 
+            a = np.mean(np.array(a), axis=0, keepdims=False)
+            b = np.mean(np.array(b), axis=0, keepdims=False)
+
+            print(a.shape, b.shape)
+            print('debug')
 
 
+        pairs = []
+        for i in range(len(marker2cam_poses)):
+            for j in range(i+1, len(marker2cam_poses)):
+                A = np.dot(ee2base_poses[j], np.linalg.inv(ee2base_poses[i]))
+                B = np.dot(marker2cam_poses[j], np.linalg.inv(marker2cam_poses[i]))
+                pairs.append([A, B])
 
-
-        raise NotImplementedError
+        T = Tsai_sol(pairs)
+        return T
 
     @staticmethod
     def compute_pose_distance(pose1: np.ndarray, pose2: np.ndarray) -> float:
@@ -386,12 +458,18 @@ class HW1Env(StackingEnv):
         """
         #todo calc distance of two transform matrix
 
-
-
-
-
-
-        raise NotImplementedError
+        T_diff = np.matmul(np.linalg.inv(pose1), pose2)
+        R_diff = T_diff[:3, :3]
+        p_diff = T_diff[:3, 3]
+        # edge cases: R_diff approx identity
+        if np.abs(np.trace(R_diff) - 3) < 1e-1:
+            theta = np.zeros(3)
+            rho = p_diff
+        else:
+            theta = SO32rotvec(R_diff)
+            rho = np.matmul(J_L_inv(theta), p_diff)
+        dist = np.linalg.norm(np.hstack((theta, rho)))
+        return dist
 
     def compute_grasp_qpos(self, cam2base: np.ndarray, seg_id: int) -> Sequence[float]:
         """You need to implement this function
@@ -425,7 +503,6 @@ class HW1Env(StackingEnv):
 
         """
         point_cloud = self.get_object_point_cloud(seg_id)
-
 
 
         #todo determine gripper location
