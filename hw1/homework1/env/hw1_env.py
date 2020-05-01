@@ -24,57 +24,83 @@ def Skew(w):
     skew[2, 1] = w[0]
     return skew
 
+def SkewInv(skew):
+    w = np.array([skew[2, 1], skew[0, 2], skew[1, 0]])
+    return w
+
 def Rodrigues(theta, w):
     w = w.reshape((3,))
     w = w / np.linalg.norm(w)
 
     skew = Skew(w)
-
     R = np.eye(3, dtype=np.float32) + np.sin(theta) * skew + (1 - np.cos(theta)) * np.dot(skew, skew)
     return R
 
-def Rodrigues_1(mat):
+def RodriguesInv(R):
+    theta = np.arccos((np.trace(R)-1.)*0.5)
+    D = np.array([R[2, 1]-R[1, 2], R[0, 2]-R[2, 0], R[1, 0]-R[0, 1]])
+    w = D / np.linalg.norm(D) * theta
+    return w
 
+def T_inv(T):
+    mat = np.eye(4)
+    mat[:3, :3] = T[:3, :3].T
+    mat[:3, 3] = -np.dot(T[:3,:3].T, T[:3, 3])
+    return mat
 
+def J_L_Inv(theta):
+    norm = np.linalg.norm(theta)
+    term1 = np.eye(3)-0.5*Skew(theta)
+    term2 = (1+np.cos(norm))/(norm**2)-1./(2*norm*np.sin(norm))
+    term3 = np.dot(Skew(theta), Skew(theta))
+    return term1+term2*term3
 
+def LogMap(T):
+    R = T[:3, :3]
+    t = T[:3, 3]
+    if np.abs(np.trace(R) - 3) < 1e-1:
+        theta = np.zeros((3, ))
+        p = t
+    else:
+        theta = RodriguesInv(R)
+        p = np.dot(J_L_Inv(theta), t).reshape((3, ))
 
-    pass
+    return np.concatenate([theta, p], axis=0)
 
-def SkewSymmetricinv(R):
-    """
-    The inverse skew-symmetric from a matrix to a 3D vector
-    Args:
-        theta: 3d vector
-    Returns:
-        R: 3x3 matrix
-    """
-    theta = np.array([R[2,1],R[0,2],R[1,0]])
-    return theta
+def Vec3d2Rot(vec):
+    vec = vec.reshape((3, 1))
+    term1 = (1-np.sum(vec**2)*0.5)*np.eye(3)
+    alpha = np.sqrt(4-np.sum(vec**2))
+    mat = np.dot(vec, vec.T)
+    term2 = 0.5*(mat+alpha*Skew(vec))
+    return term1 + term2
 
-def J_L_inv(theta):
-    """
-    The inverse left Jacobian of a 3D rotation vector
-    Args:
-        theta: 3d vector
-    Returns:
-        R: 3x3 matrix
-    """
-    R = np.eye(3) - 0.5*Skew(theta) + ((1+np.cos(np.linalg.norm(theta)))/(np.linalg.norm(theta)- 1/(2*np.linalg.norm(theta)*np.sin(np.linalg.norm(theta))))**2)*np.matmul(Skew(theta),Skew(theta))
-    return R
+def Rot2Vec3d(R):
+    trace = np.trace(R)
+    max_diag = np.max([R[0, 0], R[1, 1], R[2, 2]])
+    if trace > 0:
+        S = np.sqrt(trace + 1.) * 2. # 4 * cos(theta / 2)
+        q1 = (R[2, 1]-R[1, 2]) / S
+        q2 = (R[0, 2]-R[2, 0]) / S
+        q3 = (R[1, 0]-R[0, 1]) / S
+    elif max_diag == R[0, 0]:
+        S = np.sqrt(1.+R[0, 0]-R[1, 1]-R[2, 2]) * 2.
+        q1 = 0.25 * S
+        q2 = (R[0, 1] + R[1, 0]) / S
+        q3 = (R[0, 2] + R[2, 0]) / S
+    elif max_diag == R[1, 1]:
+        S = np.sqrt(1.+R[1, 1]-R[0, 0]-R[2, 2]) * 2.
+        q1 = (R[0, 1]+R[1, 0]) / S
+        q2 = 0.25 * S
+        q3 = (R[1, 2]+R[2, 1]) / S
+    else:
+        S = np.sqrt(1.+R[2, 2]-R[0, 0]-R[1, 1]) * 2.
+        q1 = (R[0, 2]-R[2, 0]) / S
+        q2 = (R[1, 2]-R[2, 1]) / S
+        q3 = 0.25 * S
+    p = np.array([q1, q2, q3]) * 2.
+    return p
 
-def SO32rotvec(rot):
-    """
-    The logarithm
-    Args:
-        rot: 3x3 matrix in SO(3)
-    Returns:
-        theta: 3d rotation vector
-    """
-    norm = np.arccos((np.trace(rot)-1)/2)
-    direction = 1/(2*np.sin(norm))*np.array([rot[2,1]-rot[1,2],rot[0,2]-rot[2,0],rot[1,0]-rot[0,1]])
-    theta = direction*norm
-    theta_test = SkewSymmetricinv(norm/(2*np.sin(norm))*(rot-rot.transpose()))
-    return theta
 
 class HW1Env(StackingEnv):
     def __init__(self, timestep: float):
@@ -306,7 +332,7 @@ class HW1Env(StackingEnv):
 
         # find 2D points
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        ret, corners = cv2.findChessboardCorners(gray.astype(np.uint8), (h, w), None)
+        ret, corners = cv2.findChessboardCorners(gray.astype(np.uint8), (h, w), flags=cv2.CALIB_CB_ADAPTIVE_THRESH)
 
         if ret == 0:
             return False, None
@@ -316,13 +342,16 @@ class HW1Env(StackingEnv):
         # plt.imshow(img)
         # plt.show()
 
-        ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera([objp], [corners], gray.shape[::-1], None, None)
+        camera_matrix = self.camera.get_camera_matrix()[:3, :3]
+        camera_distortion = np.zeros(4)
+        # Solve a PnP problem with given intrinsic parameters
+        _, rvecs, tvecs, inliers = cv2.solvePnPRansac(objp, corners, camera_matrix, camera_distortion)
 
         if ret == 0:
             return False, None
 
-        tvec = tvecs[0].reshape((3, ))
-        rvec = rvecs[0].reshape((3, ))
+        tvec = np.array(tvecs).reshape((3, ))
+        rvec = np.array(rvecs).reshape((3, ))
 
         theta = np.linalg.norm(rvec).squeeze()
 
@@ -364,12 +393,6 @@ class HW1Env(StackingEnv):
             self.step()
 
             flag, T_m2c = self.get_current_marker_pose()
-            gt = self.board2cam_gt()
-
-            dist = self.compute_pose_distance(T_m2c, gt)
-            print('dist: ', dist)
-
-
             T_e2b = self.get_current_ee_pose()
 
             if flag:
@@ -403,8 +426,6 @@ class HW1Env(StackingEnv):
 
         """
 
-        #todo calibration
-
         def Tsai_sol(ABs):
 
             a = []
@@ -412,32 +433,45 @@ class HW1Env(StackingEnv):
 
             for (A, B) in ABs:
                 R_a = A[:3, :3].copy()
-
-                w_a, v_a = np.linalg.eig(R_a)
-                ind_a = np.argmin(np.abs(np.real(w_a)-1.))
-                n_a = v_a[:, ind_a]
-
+                n_a = Rot2Vec3d(R_a)
                 R_b = B[:3, :3].copy()
-                w_b, v_b = np.linalg.eig(R_b)
-                ind_b = np.argmin(np.abs(np.real(w_b)-1.))
-                n_b = v_b[:, ind_b]
-
+                n_b = Rot2Vec3d(R_b)
                 a.append(Skew(n_a+n_b))
                 b.append(n_a-n_b)
 
+            a = np.concatenate(a, axis=0)
+            b = np.concatenate(b, axis=0)
+            n = np.linalg.lstsq(a, b, rcond=None)[0]
 
-            a = np.mean(np.array(a), axis=0, keepdims=False)
-            b = np.mean(np.array(b), axis=0, keepdims=False)
+            n_x = 2 * n / np.sqrt(1 + np.sum(n**2))
+            if n_x[2] < 0:
+                n_x *= -1
+            R = Vec3d2Rot(n_x)
 
-            print(a.shape, b.shape)
-            print('debug')
+            a_2 = []
+            b_2 = []
+            for (A, B) in ABs:
+                t_a = A[:3, 3].copy()
+                R_a = A[:3, :3].copy()
+                a_2.append(R_a - np.eye(3))
 
+                t_b = B[:3, 3].copy()
+                b_2.append(np.dot(R, t_b)-t_a)
+            a_2 = np.concatenate(a_2, axis=0)
+            b_2 = np.concatenate(b_2, axis=0)
+            t = np.linalg.lstsq(a_2, b_2, rcond=None)[0]
+
+            T = np.eye(4)
+            T[:3, :3] = R
+            T[:3, 3] = t
+            return T
 
         pairs = []
         for i in range(len(marker2cam_poses)):
             for j in range(i+1, len(marker2cam_poses)):
-                A = np.dot(ee2base_poses[j], np.linalg.inv(ee2base_poses[i]))
-                B = np.dot(marker2cam_poses[j], np.linalg.inv(marker2cam_poses[i]))
+
+                A = np.dot(ee2base_poses[j], T_inv(ee2base_poses[i]))
+                B = np.dot(marker2cam_poses[j], T_inv(marker2cam_poses[i]))
                 pairs.append([A, B])
 
         T = Tsai_sol(pairs)
@@ -456,19 +490,9 @@ class HW1Env(StackingEnv):
             Distance scalar
 
         """
-        #todo calc distance of two transform matrix
-
-        T_diff = np.matmul(np.linalg.inv(pose1), pose2)
-        R_diff = T_diff[:3, :3]
-        p_diff = T_diff[:3, 3]
-        # edge cases: R_diff approx identity
-        if np.abs(np.trace(R_diff) - 3) < 1e-1:
-            theta = np.zeros(3)
-            rho = p_diff
-        else:
-            theta = SO32rotvec(R_diff)
-            rho = np.matmul(J_L_inv(theta), p_diff)
-        dist = np.linalg.norm(np.hstack((theta, rho)))
+        T_diff = np.dot(T_inv(pose1), pose2)
+        vec6d = LogMap(T_diff)
+        dist = np.linalg.norm(vec6d)
         return dist
 
     def compute_grasp_qpos(self, cam2base: np.ndarray, seg_id: int) -> Sequence[float]:
@@ -504,10 +528,18 @@ class HW1Env(StackingEnv):
         """
         point_cloud = self.get_object_point_cloud(seg_id)
 
+        obj_p = np.mean(point_cloud, axis=1)
+        # manually tested with different offsets
+        obj_p[0] -= 0.0
+        obj_p[1] -= 0.0
+        obj_p[2] -= 0.08
 
-        #todo determine gripper location
-        #todo transform gripper into base frame using cam2base
-        #todo compute IK
+        obj2cam = np.eye(4)
+        obj2cam[:3, 3] = obj_p
 
+        obj2cam[:3, :3] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
 
-        raise NotImplementedError
+        gripper_pose = np.dot(cam2base, obj2cam)
+        qpos = self.compute_ik(gripper_pose)[0]
+        qpos = qpos + [0.04, 0.04]
+        return qpos
