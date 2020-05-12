@@ -84,7 +84,7 @@ def dist_SO3(rot1,rot2):
 
 def SO32rotvec(rot):
     """
-    The logarithm 
+    The logarithm map for SO(3)
     Args:
         rot: 3x3 matrix in SO(3)
     Returns:

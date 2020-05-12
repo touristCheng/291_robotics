@@ -9,6 +9,77 @@ import sapien.core as sapien
 import numpy as np
 from typing import List, Tuple, Sequence
 
+#######################################
+# === Some useful functions below === #
+#######################################
+def SkewSymmetric(theta):
+    """
+    The skew-symmetric matrix for a 3D vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """
+    theta = np.squeeze(theta)        
+    R = np.array([[0,-theta[2],theta[1]],
+                [theta[2],0,-theta[0]],
+                [-theta[1],theta[0],0]])        
+    return R
+
+def SkewSymmetricinv(R):
+    """
+    The inverse skew-symmetric from a matrix to a 3D vector
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """        
+    theta = np.array([R[2,1],R[0,2],R[1,0]])        
+    return theta
+
+def SO32rotvec(rot):
+    """
+    The logarithm map for SO(3)
+    Args:
+        rot: 3x3 matrix in SO(3)
+    Returns:
+        theta: 3d rotation vector
+    """     
+    norm = np.arccos((np.trace(rot)-1)/2)
+    direction = 1/(2*np.sin(norm))*np.array([rot[2,1]-rot[1,2],rot[0,2]-rot[2,0],rot[1,0]-rot[0,1]])
+    theta = direction*norm
+    #theta_test = SkewSymmetricinv(norm/(2*np.sin(norm))*(rot-rot.transpose()))
+    return theta
+
+def rotvec2SO3(theta):
+    """
+    The exponential map for rotation vector
+    Args:
+        theta: 3d rotation vector
+    Returns:
+        R: 3x3 matrix in SO(3)
+    """
+    theta_norm = np.linalg.norm(theta)
+    R = np.eye(3) + np.sin(theta_norm)/theta_norm*SkewSymmetric(theta) + (1-np.cos(theta_norm))/(theta_norm**2)*SkewSymmetric(theta)@SkewSymmetric(theta)
+    return R      
+
+def G_inv(theta):
+    """
+    The inverse matrix used to solve translation part of a twist from SE(3)
+    Args:
+        theta: 3d vector
+    Returns:
+        R: 3x3 matrix
+    """
+    # From MLS book page 43-44
+    theta_norm = np.linalg.norm(theta)
+    unit_theta = theta / theta_norm
+    R = (np.eye(3)-rotvec2SO3(theta))@SkewSymmetric(unit_theta) + theta_norm*np.reshape(unit_theta,(3,1))@np.reshape(unit_theta,(1,3))
+    R = np.linalg.inv(R)
+    return R
+#######################################
+# === Some useful functions above === #
+#######################################
 
 class HW2Env(StackingEnv):
     def __init__(self, timestep: float):
@@ -215,7 +286,16 @@ class HW2Env(StackingEnv):
 
         """
 
-        raise NotImplementedError
+        # QJ
+        q_w = pose.q[0]
+        q_xyz = np.expand_dims(pose.q[1:],axis=1)
+        q_xyz_hat = SkewSymmetric(q_xyz)
+        Eq = np.hstack((-q_xyz,q_w*np.eye(3)+q_xyz_hat))
+        Gq = np.hstack((-q_xyz,q_w*np.eye(3)-q_xyz_hat))
+        T = np.eye(4)
+        T[:3,:3] = Eq@(Gq.transpose())
+        T[:3,3] = pose.p
+        return T
 
     def pose2exp_coordinate(self, pose: np.ndarray) -> Tuple[np.ndarray, float]:
         """You may need to implement this function
@@ -231,7 +311,22 @@ class HW2Env(StackingEnv):
             Theta: scalar represent the quantity of exponential coordinate
         """
 
-        raise NotImplementedError
+        # QJ
+        # Decouple to get rotation and translation part
+        R = pose[:3,:3]
+        p = pose[:3,3]
+        # Special case when R == I
+        if np.abs(np.trace(R)-3) < 1e-1:
+            theta = np.zeros(3)
+            rho = p
+            Theta = np.linalg.norm(rho)
+            Unit_twist = np.hstack((theta,rho/Theta))
+        else:
+            theta = SO32rotvec(R)
+            rho = G_inv(theta)@p
+            Theta = np.linalg.norm(theta)
+            Unit_twist = np.hstack((theta/Theta,rho))
+        return Unit_twist, Theta
 
 
     def compute_joint_velocity_from_twist(self, twist: np.ndarray) -> np.ndarray:
@@ -259,7 +354,15 @@ class HW2Env(StackingEnv):
         ee_jacobian[:3, :] = dense_jacobian[self.end_effector_index * 6 - 3:self.end_effector_index * 6, :7]
         ee_jacobian[3:6, :] = dense_jacobian[(self.end_effector_index - 1) * 6:self.end_effector_index * 6 - 3, :7]
 
-        raise NotImplementedError
+        # QJ 
+        # (?) how to solve the singular problem
+        # Derive the pseudo-inverse of Jacobian
+        ee_jacobian_inv = np.linalg.inv(ee_jacobian.transpose()@ee_jacobian)@ee_jacobian.transpose()
+        #ee_jacobian_inv = ee_jacobian.transpose()@np.linalg.inv(ee_jacobian@ee_jacobian.transpose())
+        # Convert the twist to the joint velocity
+        joint_velocity = ee_jacobian_inv@twist
+        return joint_velocity
+        
 
     def move_to_target_pose_with_internal_controller(self, target_ee_pose: np.ndarray, num_steps: int) -> None:
         """You need to implement this function
@@ -281,9 +384,34 @@ class HW2Env(StackingEnv):
                 in physical simulation
 
         """
+        # QJ
+        for i in range(num_steps):
+            # Get current ee pose
+            current_ee_pose = self.get_current_ee_pose()
+            current_ee_R = current_ee_pose[:3,:3]
+            current_ee_p = current_ee_pose[:3,3]
+            # Compare with the target ee pose and get the relative transformation
+            delta_ee_pose = np.linalg.inv(current_ee_pose)@target_ee_pose
+            # Compute the exponential coordinate of the relative transformation
+            delta_ee_twist,delta_ee_theta = self.pose2exp_coordinate(delta_ee_pose)
+            # Given the time left to approach the target, compute the average twist
+            # (?) what should be the time_to_target actually
+            time_to_target = (num_steps - i)*self.scene.get_timestep()*0.2
+            delta_ee_twist_body = delta_ee_twist * (delta_ee_theta / time_to_target)
+            # Convert the body twist to the spatial twist
+            # by timing the adjoint matrix
+            adj = np.zeros((6,6))
+            adj[0:3,0:3] = current_ee_R
+            adj[3:6,3:6] = current_ee_R
+            adj[3:6,0:3] = SkewSymmetric(current_ee_p)@current_ee_R
+            delta_ee_twist_spatial = adj@delta_ee_twist_body
+            # Compute the joint velocities qvel from the spatial twist
+            target_joint_velocity = self.compute_joint_velocity_from_twist(delta_ee_twist_spatial)
+            self.internal_controller(target_joint_velocity)
+            self.step()
+            self.render()
         executed_time = num_steps * self.scene.get_timestep()
-
-        raise NotImplementedError
+        return 0
 
     def pick_up_object_with_internal_controller(self, seg_id: int, height: float) -> None:
         """You need to implement this function
