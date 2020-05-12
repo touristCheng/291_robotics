@@ -355,10 +355,8 @@ class HW2Env(StackingEnv):
         ee_jacobian[3:6, :] = dense_jacobian[(self.end_effector_index - 1) * 6:self.end_effector_index * 6 - 3, :7]
 
         # QJ 
-        # (?) how to solve the singular problem
         # Derive the pseudo-inverse of Jacobian
-        ee_jacobian_inv = np.linalg.inv(ee_jacobian.transpose()@ee_jacobian)@ee_jacobian.transpose()
-        #ee_jacobian_inv = ee_jacobian.transpose()@np.linalg.inv(ee_jacobian@ee_jacobian.transpose())
+        ee_jacobian_inv = np.linalg.pinv(ee_jacobian)
         # Convert the twist to the joint velocity
         joint_velocity = ee_jacobian_inv@twist
         return joint_velocity
@@ -396,7 +394,7 @@ class HW2Env(StackingEnv):
             delta_ee_twist,delta_ee_theta = self.pose2exp_coordinate(delta_ee_pose)
             # Given the time left to approach the target, compute the average twist
             # (?) what should be the time_to_target actually
-            time_to_target = (num_steps - i)*self.scene.get_timestep()*0.2
+            time_to_target = (num_steps - i)*self.scene.get_timestep()
             delta_ee_twist_body = delta_ee_twist * (delta_ee_theta / time_to_target)
             # Convert the body twist to the spatial twist
             # by timing the adjoint matrix
@@ -428,6 +426,7 @@ class HW2Env(StackingEnv):
 
         """
 
+        # QJ
         raise NotImplementedError
 
     def place_object_with_internal_controller(self, seg_id: int, target_object_position: np.ndarray) -> None:
