@@ -20,7 +20,7 @@ def main():
     print("Press q to continue")
     while not env.should_quit():
         env.render()
-
+    '''
     # ===============================Test Basic Function==============================
     test_pose = np.array(
         [[0.57797184, 0.42202815, 0.698456, 0.99482830], [0.42202815, 0.57797184, -0.69845599, 0.00517169],
@@ -38,7 +38,7 @@ def main():
     translational_error = target_pose[:3, 3] - pose_after_move[:3, 3]
     print("Translational error for each direction is: {}".format(translational_error))
     assert np.allclose(target_pose[:3, 3], pose_after_move[:3, 3], atol=3e-3), "transitional error is too larger"
-
+    '''
     # ===================================Preparation==================================
     red_box, green_box, blue_box = env.boxes
     position, size = env.target
@@ -46,7 +46,7 @@ def main():
     red_target_position = np.array([position[0], position[1], size])
     green_target_position = np.array([position[0], position[1], size * 3])
     blue_target_position = np.array([position[0], position[1], size * 5])
-
+    '''
     # =============================Place Red and Green Box============================
     red_height_before_pick = red_box.get_pose().p[2]
     env.pick_up_object_with_internal_controller(red_box.get_id(), pick_up_height)
@@ -61,7 +61,7 @@ def main():
 
     env.wait_n_steps(50)
     evaluate_first_two_box(env)
-
+    '''
     # =================================Place Blue Box=================================
     env.set_joint_group_property(env.arm_joints, 0, 10)  # Add some damping to the robot arm
     blue_height_before_pick = blue_box.get_pose().p[2]
