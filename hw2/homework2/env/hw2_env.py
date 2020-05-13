@@ -245,6 +245,8 @@ class HW2Env(StackingEnv):
 
         red_target_position = np.array([position[0], position[1], size])
         green_target_position = np.array([position[0], position[1], 3 * size])
+        print("red target",red_target_position,"red reality",rbox.get_pose().p)
+        print("green target",green_target_position,"green reality",gbox.get_pose().p)
         red_in_place = np.linalg.norm(rbox.get_pose().p - red_target_position) < 0.01
         green_in_place = np.linalg.norm(gbox.get_pose().p - green_target_position) < 0.01
         return green_in_place and red_in_place
@@ -285,7 +287,6 @@ class HW2Env(StackingEnv):
             (4, 4) transformation matrix represent the same pose
 
         """
-
         # QJ
         q_w = pose.q[0]
         q_xyz = np.expand_dims(pose.q[1:],axis=1)
@@ -310,7 +311,6 @@ class HW2Env(StackingEnv):
             Unit twist: (6, ) vector represent the unit twist
             Theta: scalar represent the quantity of exponential coordinate
         """
-
         # QJ
         # Decouple to get rotation and translation part
         R = pose[:3,:3]
@@ -353,7 +353,6 @@ class HW2Env(StackingEnv):
         ee_jacobian = np.zeros([6, self.robot.dof - 2])  # (6, 7)
         ee_jacobian[:3, :] = dense_jacobian[self.end_effector_index * 6 - 3:self.end_effector_index * 6, :7]
         ee_jacobian[3:6, :] = dense_jacobian[(self.end_effector_index - 1) * 6:self.end_effector_index * 6 - 3, :7]
-
         # QJ 
         # Derive the pseudo-inverse of Jacobian
         ee_jacobian_inv = np.linalg.pinv(ee_jacobian)
@@ -425,9 +424,39 @@ class HW2Env(StackingEnv):
             height: target height of the box
 
         """
-
         # QJ
-        raise NotImplementedError
+        # Get object point cloud
+        point_cloud = self.get_object_point_cloud(seg_id)
+        # Simply get the mean of the point cloud
+        obj_p = np.mean(point_cloud,axis=1)
+        obj2cam = np.eye(4)
+        obj2cam[:3,3] = obj_p
+        # (?) trick to refine the pose approaching the object
+        # manually tested with different R and p offsets
+        obj2cam[:3,:3] = np.array([[ 0.13959368, -0.98842393,  0.05943362],
+                                [ 0.59127277,  0.13135001,  0.79570365],
+                                [-0.79429889, -0.07593369,  0.6027636]])
+        obj2cam[:3,3] -= np.array([0,0.08,0.05])
+        # convert to the pose in spatial coordinate
+        target_pose = self.cam2base_gt()@obj2cam
+        target_pose[2,3] += 0.1
+        # move to target pose with internal controller
+        # with two steps
+        self.move_to_target_pose_with_internal_controller(target_pose, 100)
+        self.wait_n_steps(200)
+        target_pose[2,3] -= 0.09
+        self.move_to_target_pose_with_internal_controller(target_pose, 100)
+        self.wait_n_steps(200)
+        # close the gripper
+        self.close_gripper()
+        self.wait_n_steps(200)
+        # lift the object for certain height
+        target_lift_pose = target_pose
+        target_lift_pose[2,3] += height
+        self.move_to_target_pose_with_internal_controller(target_lift_pose, 100)
+        self.wait_n_steps(200)
+        
+        return 0
 
     def place_object_with_internal_controller(self, seg_id: int, target_object_position: np.ndarray) -> None:
         """You need to implement this function
@@ -443,8 +472,32 @@ class HW2Env(StackingEnv):
             target_object_position: target position of the box
 
         """
-
-        raise NotImplementedError
+        # QJ
+        # move to target pose with internal controller
+        target_object_pose = self.get_current_ee_pose()
+        # slightly tuning the target_object_position     
+        target_object_position += np.array([0.01,0.00,0.11])
+        target_object_pose[:3,3] = target_object_position 
+        # move to target pose with internal controller
+        # with two steps
+        target_object_pose[2,3] += 0.03
+        self.move_to_target_pose_with_internal_controller(target_object_pose, 100)
+        self.wait_n_steps(200)
+        target_object_pose[2,3] -= 0.02
+        self.move_to_target_pose_with_internal_controller(target_object_pose, 100)
+        self.wait_n_steps(200)
+        # open the gripper to place the object
+        self.open_gripper()
+        self.wait_n_steps(200)
+        # move the gripper to some safe place
+        save_distance_yz = 0.1
+        target_save_pose = self.get_current_ee_pose()
+        target_save_pose[2,2] += save_distance_yz
+        target_save_pose[2,3] += save_distance_yz
+        self.move_to_target_pose_with_internal_controller(target_save_pose, 100)
+        self.wait_n_steps(200)
+        
+        return 0
 
     def move_to_target_pose_with_user_controller(self, target_ee_pose: np.ndarray, num_steps: int) -> None:
         """You need to implement this function
