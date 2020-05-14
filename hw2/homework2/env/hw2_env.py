@@ -78,7 +78,6 @@ def G_inv(theta):
     R = np.linalg.inv(R)
     return R
 
-# (?)
 def dist_SE3(pose1,pose2): 
     """
     The distance between two SE(3) matrices
@@ -479,12 +478,14 @@ class HW2Env(StackingEnv):
         obj2cam[:3,3] -= np.array([0,0.08,0.05])
         # convert to the pose in spatial coordinate
         target_pose = self.cam2base_gt()@obj2cam
-        target_pose[2,3] += 0.1
+        current_pose = self.get_current_ee_pose()
+        keep_height = current_pose[2,3] - target_pose[2,3]
+        target_pose[2,3] += keep_height
         # move to target pose with internal controller
         # with two steps
         self.move_to_target_pose_with_internal_controller(target_pose, 100)
-        self.wait_n_steps(50)
-        target_pose[2,3] -= 0.09
+        self.wait_n_steps(100)
+        target_pose[2,3] -= keep_height-0.01
         self.move_to_target_pose_with_internal_controller(target_pose, 100)
         self.wait_n_steps(50)
         # close the gripper
@@ -533,7 +534,7 @@ class HW2Env(StackingEnv):
         # move the gripper to some safe place
         save_distance_yz = 0.1
         target_save_pose = self.get_current_ee_pose()
-        target_save_pose[2,2] += save_distance_yz
+        #target_save_pose[2,2] += save_distance_yz
         target_save_pose[2,3] += save_distance_yz
         self.move_to_target_pose_with_internal_controller(target_save_pose, 100)
         self.wait_n_steps(50)
@@ -576,6 +577,7 @@ class HW2Env(StackingEnv):
         timestep = self.scene.get_timestep()
         executed_time = num_steps * timestep
         # QJ
+        # (?) TODO
         # Try a PID controller
         # ref: https://sapien.ucsd.edu/docs/tutorial/robotics/pid.html
         
@@ -604,42 +606,117 @@ class HW2Env(StackingEnv):
         def pid_forward(pids: list, target_pos: np.ndarray, current_pos: np.ndarray, dt: float) -> np.ndarray:
             qf = np.zeros(len(pids))
             errors = target_pos - current_pos
-            print("qpos error",errors)
+            #print(errors)
             for i in range(len(pids)):
                 qf[i] = pids[i].compute(errors[i], dt)
-            return qf
+            return qf, errors
 
-        # Convert the target pose into joint states
-        target_qpos = self.compute_ik(target_ee_pose)[0]
-        target_qpos = target_qpos + [0.04, 0.04]
         # PID parameters
         pids = []
-        pid_parameters = [(20, 0, 0), (40, 0, 0), (20, 0, 0), (40, 0, 0), 
-                        (20, 0, 0), (40, 0, 0), (10, 0, 0), 
+        #pid_parameters = [(1000, 0, 0), (100,3,10), (100,0,5), (100,3,3), 
+        #                (100,0,0), (100,3,0), (100,0,0), 
+        #                (0,0,0),(0,0,0)]
+        pid_parameters = [(100,0,1),(20,5,3),(40,0,0),(10,0,0), 
+                        (1000,0,3),(10,0,0),(50,0,0), 
                         (0,0,0),(0,0,0)]
         for i in range(9):
             pids.append(SimplePID(pid_parameters[i][0], pid_parameters[i][1], pid_parameters[i][2]))
-        #pid_parameters = [60,8,3]
-        #for i in range(9):
-        #    pids.append(SimplePID(pid_parameters[0], pid_parameters[1], pid_parameters[2]))
-        #pids[3] = SimplePID(10,8,10)
-        # iteratae until the SE(3)/twist distance is smaller than certain threshold
-        error_threshold = 1e-2
-        while dist_SE3(target_ee_pose,self.get_current_ee_pose()) > error_threshold:
-            # add force compensate
-            gravity_compensation = self.robot.compute_passive_force(gravity=True, 
-                                                                    coriolis_and_centrifugal=False,
-                                                                    external=False)
-            coriolis_and_centrifugal_compensation = self.robot.compute_passive_force(gravity=False,
-                                                                                    coriolis_and_centrifugal=True,
-                                                                                    external=False)
-            # control signal from PID
-            pid_qf = pid_forward(pids,target_qpos,self.robot.get_qpos(),timestep) 
-            joint_torque = pid_qf+gravity_compensation+coriolis_and_centrifugal_compensation
-            self.robot.set_qf(joint_torque)
-            self.step()
-            self.render() 
-            print("my controller error", dist_SE3(target_ee_pose,self.get_current_ee_pose()))       
+
+        for i in range(num_steps):
+            current_ee_pose = self.get_current_ee_pose()
+            current_ee_R = current_ee_pose[:3,:3]
+            current_ee_p = current_ee_pose[:3,3]
+            # Compare with the target ee pose and get the relative transformation
+            delta_ee_pose = np.linalg.inv(current_ee_pose)@target_ee_pose
+            # Compute the exponential coordinate of the relative transformation
+            delta_ee_twist,delta_ee_theta = self.pose2exp_coordinate(delta_ee_pose)
+            # Given the time left to approach the target, compute the average twist
+            #magic_ratio = 1
+            #time_to_target = (num_steps - i) * magic_ratio
+            dist_ratio = (i+1)/num_steps
+            delta_ee_twist_body = delta_ee_twist * delta_ee_theta * dist_ratio
+            #delta_ee_twist_body = delta_ee_twist * delta_ee_theta
+            # Convert the body twist to the spatial twist
+            # by timing the adjoint matrix
+            adj = np.zeros((6,6))
+            adj[0:3,0:3] = current_ee_R
+            adj[3:6,3:6] = current_ee_R
+            adj[3:6,0:3] = SkewSymmetric(current_ee_p)@current_ee_R
+            delta_ee_twist_spatial = adj@delta_ee_twist_body
+            # Compute the joint velocities qvel from the spatial twist
+            target_joint_velocity = self.compute_joint_velocity_from_twist(delta_ee_twist_spatial) 
+            target_qpos = target_joint_velocity + self.robot.get_drive_target()[:-2]
+            target_qpos = np.hstack((target_qpos,[0.04, 0.04]))
+            local_target_ee_pose = current_ee_pose @ exp_twist(delta_ee_twist,delta_ee_theta*dist_ratio)
+
+            print(i)
+            print("current_ee_pose",current_ee_pose[:3,3])
+            print("target_ee_pose",target_ee_pose[:3,3])
+            print("local_target",local_target_ee_pose[:3,3])
+            
+            ### visualization ###
+            import matplotlib.pyplot as plt
+            x = np.linspace(0, 100, 100)
+            y = np.zeros((7,x.shape[0]))
+            # You probably won't need this if you're embedding things in a tkinter plot...
+            plt.ion()
+            fig = plt.figure()
+            ax = fig.add_subplot(111)
+            line0, = ax.plot(x,y[0,:],'b--',label='zero')
+            line1, = ax.plot(x,y[0,:],'-',label='j1')
+            line2, = ax.plot(x,y[0,:],'-',label='j2')
+            line3, = ax.plot(x,y[0,:],'-',label='j3')
+            line4, = ax.plot(x,y[0,:],'-',label='j4')
+            line5, = ax.plot(x,y[0,:],'-',label='j5')
+            line6, = ax.plot(x,y[0,:],'-',label='j6')
+            line7, = ax.plot(x,y[0,:],'-',label='j7')
+            ax.legend()
+            ### visualization ###
+
+            # iteratae until the SE(3)/twist distance is smaller than certain threshold
+            error_threshold = 1e-2
+
+            while dist_SE3(local_target_ee_pose,self.get_current_ee_pose()) > error_threshold:
+                # add force compensate
+                gravity_compensation = self.robot.compute_passive_force(gravity=True, 
+                                                                            coriolis_and_centrifugal=False,
+                                                                            external=False)
+                coriolis_and_centrifugal_compensation = self.robot.compute_passive_force(gravity=False,
+                                                                                            coriolis_and_centrifugal=True,
+                                                                                            external=False)
+                # control signal from PID
+                pid_qf,q_error = pid_forward(pids,target_qpos,self.robot.get_qpos(),timestep) 
+                #print("qpos error",q_error,np.linalg.norm(q_error))
+                
+                ### visualization ###
+                for idx in range(7):
+                    y[idx,0:-1] = y[idx,1:]
+                    y[idx,-1] = q_error[idx]
+                line1.set_ydata(y[0,:])
+                line2.set_ydata(y[1,:])
+                line3.set_ydata(y[2,:])
+                line4.set_ydata(y[3,:])
+                line5.set_ydata(y[4,:])
+                line6.set_ydata(y[5,:])
+                line7.set_ydata(y[6,:])
+                fig.canvas.draw()
+                fig.canvas.flush_events()
+                ### visualization ###
+
+                # use another error metric of q
+                joint_torque = pid_qf+gravity_compensation+coriolis_and_centrifugal_compensation
+                self.robot.set_qf(joint_torque)
+                self.step()
+                self.render() 
+                print("error",q_error,np.linalg.norm(q_error),np.linalg.norm(q_error) < 1e-2)
+                if np.linalg.norm(q_error) < 1e-2:
+                    break
+                print("my controller error", dist_SE3(local_target_ee_pose,self.get_current_ee_pose()))       
+
+            ### visualization ###
+            plt.close('all')
+            ### visualization ###
+            
         return 0
 
     def pick_up_object_with_user_controller(self, seg_id: int, height: float) -> None:
@@ -657,7 +734,10 @@ class HW2Env(StackingEnv):
 
         """
         # QJ
-        # don't see much difference if keep using self.move_to_target_pose_with_user_controller
+        # TODO
+        _, _, bbox = self.boxes
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         # Get object point cloud
         point_cloud = self.get_object_point_cloud(seg_id)
         # Simply get the mean of the point cloud
@@ -666,29 +746,49 @@ class HW2Env(StackingEnv):
         obj2cam[:3,3] = obj_p
         # (?) trick to refine the pose approaching the object
         # manually tested with different R and p offsets
+        # Even the blue box need slight change on these
         obj2cam[:3,:3] = np.array([[ 0.13959368, -0.98842393,  0.05943362],
                                 [ 0.59127277,  0.13135001,  0.79570365],
                                 [-0.79429889, -0.07593369,  0.6027636]])
-        obj2cam[:3,3] -= np.array([0,0.08,0.05])
+        obj2cam[:3,3] -= np.array([0,0.10,0.05])
         # convert to the pose in spatial coordinate
         target_pose = self.cam2base_gt()@obj2cam
-        target_pose[2,3] += 0.1
-        # move to target pose with user controller
+        # manually refine the contact point
+        target_pose[:3,:3] = -np.eye(3)
+        target_pose[0,0] = 1
+        target_pose[:3,3] += np.array([0,0.-0.03,0.00])
+        current_pose = self.get_current_ee_pose()
+        keep_height = current_pose[2,3] - target_pose[2,3]
+        target_pose[2,3] += keep_height
+        # move to target pose with internal controller
         # with two steps
-        self.move_to_target_pose_with_user_controller(target_pose, 100)
-        self.wait_n_steps(50)
-        target_pose[2,3] -= 0.11
-        self.move_to_target_pose_with_user_controller(target_pose, 100)
-        self.wait_n_steps(50)
+        print("move to the top")
+        self.move_to_target_pose_with_user_controller(target_pose, 30)
+        self.wait_n_steps(400)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
+        target_pose[2,3] -= keep_height
+        print("move to the box")
+        self.move_to_target_pose_with_user_controller(target_pose, 5)
+        self.wait_n_steps(1000)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         # close the gripper
+        print("pick the box")
         self.close_gripper()
-        self.wait_n_steps(250)
+        self.wait_n_steps(1000)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         # lift the object for certain height
         target_lift_pose = target_pose
+        # trick
         target_lift_pose[2,3] += height
-        self.move_to_target_pose_with_user_controller(target_lift_pose, 100)
-        self.wait_n_steps(50)
-
+        print("lift the box")
+        self.move_to_target_pose_with_user_controller(target_lift_pose, 5)
+        self.wait_n_steps(400)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
+        
         return 0
 
     def place_object_with_user_controller(self, seg_id: int, target_object_position: np.ndarray) -> None:
@@ -703,49 +803,44 @@ class HW2Env(StackingEnv):
 
         """
         # QJ
+        # TODO
+        _, _, bbox = self.boxes
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         current_object_pose = self.get_current_ee_pose()
         target_object_pose = np.copy(current_object_pose)
+        target_object_pose[:3,:3] = -np.eye(3)
+        target_object_pose[0,0] = 1
         # slightly tuning the target_object_position     
-        target_object_position += np.array([0.01,0.00,0.11])
+        target_object_position += np.array([0.00,0.00,0.11])
         target_object_pose[:3,3] = target_object_position 
         # move to target pose with user controller
         # with multiple steps
-        target_object_pose[2,3] += 0.03
-        # Compare with the target ee pose and get the relative transformation
-        delta_ee_pose = np.linalg.inv(current_object_pose)@target_object_pose
-        # Compute the exponential coordinate of the relative transformation
-        delta_ee_twist,delta_ee_theta = self.pose2exp_coordinate(delta_ee_pose)
-        # Generate more than one segment of transformation
-        # and execute them sequentially
-        n_segment = 20
-        for i in range(n_segment):
-            local_change_theta = delta_ee_theta*(i+1)/n_segment
-            local_change_T = exp_twist(delta_ee_twist,local_change_theta)
-            local_target_object_pose = current_object_pose@local_change_T
-            
-            target_qpos = self.compute_ik(local_target_object_pose)[0]
-            target_qpos = target_qpos + [0.04, 0.04]
-            current_qpos = self.robot.get_qpos()
-            print("current",current_qpos)
-            print("target",target_qpos)
-            print("change",target_qpos-current_qpos)
-
-            self.move_to_target_pose_with_user_controller(local_target_object_pose, 100)
-            self.wait_n_steps(10)
-        return 0
-
-        target_object_pose[2,3] -= 0.02
-        self.move_to_target_pose_with_user_controller(target_object_pose, 100)
-        self.wait_n_steps(50)
+        hold_height = 0.03
+        target_object_pose[2,3] += hold_height
+        print("horizontally move the box")
+        self.move_to_target_pose_with_user_controller(target_object_pose, 1500)
+        self.wait_n_steps(400)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
+        target_object_pose[2,3] -= hold_height-0.01
+        print("place the box")
+        self.move_to_target_pose_with_user_controller(target_object_pose, 1000)
+        self.wait_n_steps(400)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         # open the gripper to place the object
+        print("release the box")
         self.open_gripper()
-        self.wait_n_steps(250)
+        self.wait_n_steps(400)
+        print("blue box",bbox.get_pose().q,bbox.get_pose().p)
+        print(self.get_current_ee_pose())
         # move the gripper to some safe place
         save_distance_yz = 0.1
         target_save_pose = self.get_current_ee_pose()
         target_save_pose[2,2] += save_distance_yz
         target_save_pose[2,3] += save_distance_yz
-        self.move_to_target_pose_with_user_controller(target_save_pose, 100)
-        self.wait_n_steps(50)
+        self.move_to_target_pose_with_user_controller(target_save_pose, 1000)
+        self.wait_n_steps(400)
 
         return 0

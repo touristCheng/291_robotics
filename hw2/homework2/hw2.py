@@ -46,7 +46,7 @@ def main():
     red_target_position = np.array([position[0], position[1], size])
     green_target_position = np.array([position[0], position[1], size * 3])
     blue_target_position = np.array([position[0], position[1], size * 5])
-    '''
+    
     # =============================Place Red and Green Box============================
     red_height_before_pick = red_box.get_pose().p[2]
     env.pick_up_object_with_internal_controller(red_box.get_id(), pick_up_height)
@@ -61,7 +61,9 @@ def main():
 
     env.wait_n_steps(50)
     evaluate_first_two_box(env)
-    '''
+    
+    #env.robot.set_qpos([-0.061,-0.055,0.065,-2.259,-0.,2.202,0.698,0.04,0.04])
+    #env.wait_n_steps(1000)
     # =================================Place Blue Box=================================
     env.set_joint_group_property(env.arm_joints, 0, 10)  # Add some damping to the robot arm
     blue_height_before_pick = blue_box.get_pose().p[2]
