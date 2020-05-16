@@ -12,8 +12,6 @@ from typing import List, Tuple, Sequence
 #######################################
 # === Some useful functions below === #
 #######################################
-from simple_pid import PID
-
 def SkewSymmetric(theta):
     """
     The skew-symmetric matrix for a 3D vector
@@ -671,16 +669,6 @@ class HW2Env(StackingEnv):
             ax.legend()
             ### visualization ###
 
-            pid_list = []
-            pid_list.append(PID(1000, 0, 100, setpoint=target_qpos[0]))
-            pid_list.append(PID(50, 0, 10, setpoint=target_qpos[1]))
-            pid_list.append(PID(100, 0, 10, setpoint=target_qpos[2]))
-            pid_list.append(PID(50, 0, 10, setpoint=target_qpos[3]))
-            pid_list.append(PID(100, 0, 10, setpoint=target_qpos[4]))
-            pid_list.append(PID(100, 0, 10, setpoint=target_qpos[5]))
-            pid_list.append(PID(100, 0, 10, setpoint=target_qpos[6]))
-            
-
             while 1:
                 gravity_compensation = self.robot.compute_passive_force(gravity=True, 
                                                                                     coriolis_and_centrifugal=False,
@@ -689,14 +677,7 @@ class HW2Env(StackingEnv):
                                                                                                     coriolis_and_centrifugal=True,
                                                                                                     external=False)
                 # control signal from PID
-                #pid_qf,q_error = pid_forward(pids,target_qpos,self.robot.get_qpos(),timestep) 
-                pid_qf = []
-                current_qpos = self.robot.get_qpos()
-                for i in range(7):
-                    pid_qf.append(pid_list[i](current_qpos[i]))
-                pid_qf.append(0)
-                pid_qf.append(0)
-                pid_qf = np.array(pid_qf)
+                pid_qf,q_error = pid_forward(pids,target_qpos,self.robot.get_qpos(),timestep) 
                 q_error = target_qpos-current_qpos
                 joint_torque = pid_qf+gravity_compensation+coriolis_and_centrifugal_compensation
                 print(q_error,np.linalg.norm(q_error))
