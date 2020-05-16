@@ -14,13 +14,13 @@ def main():
 
     # Increase this rate to a higher value if you find your visualization is too slow
     # E.g. if you are using a old mac book pro, you can do: env.render_rate = 5
-    env.render_rate = 1
+    env.render_rate = 30
     env.wait_n_steps(100)
 
     print("Press q to continue")
     while not env.should_quit():
         env.render()
-    '''
+    
     # ===============================Test Basic Function==============================
     test_pose = np.array(
         [[0.57797184, 0.42202815, 0.698456, 0.99482830], [0.42202815, 0.57797184, -0.69845599, 0.00517169],
@@ -38,7 +38,7 @@ def main():
     translational_error = target_pose[:3, 3] - pose_after_move[:3, 3]
     print("Translational error for each direction is: {}".format(translational_error))
     assert np.allclose(target_pose[:3, 3], pose_after_move[:3, 3], atol=3e-3), "transitional error is too larger"
-    '''
+    
     # ===================================Preparation==================================
     red_box, green_box, blue_box = env.boxes
     position, size = env.target
@@ -62,8 +62,6 @@ def main():
     env.wait_n_steps(50)
     evaluate_first_two_box(env)
     
-    #env.robot.set_qpos([-0.061,-0.055,0.065,-2.259,-0.,2.202,0.698,0.04,0.04])
-    #env.wait_n_steps(1000)
     # =================================Place Blue Box=================================
     env.set_joint_group_property(env.arm_joints, 0, 10)  # Add some damping to the robot arm
     blue_height_before_pick = blue_box.get_pose().p[2]
