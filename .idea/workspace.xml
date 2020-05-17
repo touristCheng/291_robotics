@@ -71,8 +71,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1006">
-              <caret line="858" lean-forward="true" selection-start-line="858" selection-end-line="858" />
+            <state relative-caret-position="-73">
+              <caret line="833" column="43" selection-start-line="833" selection-start-column="43" selection-end-line="833" selection-end-column="43" />
               <folding>
                 <element signature="e#284#321#0" expanded="true" />
                 <element signature="e#722#906#0" expanded="true" />
@@ -89,7 +89,6 @@
                 <element signature="e#6808#7891#0" expanded="true" />
                 <element signature="e#10181#10851#0" expanded="true" />
                 <element signature="e#28681#32790#0" expanded="true" />
-                <element signature="e#32898#34564#0" expanded="true" />
                 <element signature="e#19446#19898#0" expanded="true" />
               </folding>
             </state>
@@ -342,20 +341,19 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13530655" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.35783133" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.57710844" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info anchor="bottom" id="Terminal" order="8" weight="0.24578314" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="8" visible="true" weight="0.24578314" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -448,8 +446,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1006">
-          <caret line="858" lean-forward="true" selection-start-line="858" selection-end-line="858" />
+        <state relative-caret-position="-73">
+          <caret line="833" column="43" selection-start-line="833" selection-start-column="43" selection-end-line="833" selection-end-column="43" />
           <folding>
             <element signature="e#284#321#0" expanded="true" />
             <element signature="e#722#906#0" expanded="true" />
@@ -466,7 +464,6 @@
             <element signature="e#6808#7891#0" expanded="true" />
             <element signature="e#10181#10851#0" expanded="true" />
             <element signature="e#28681#32790#0" expanded="true" />
-            <element signature="e#32898#34564#0" expanded="true" />
             <element signature="e#19446#19898#0" expanded="true" />
           </folding>
         </state>

@@ -762,8 +762,8 @@ class HW2Env(StackingEnv):
         cur_qpos = self.robot.get_qpos()
 
         #################
-        # finished [0, 1, 2, 3]
-        #todo tune pid for each joint [4, 5, 6]
+        # finished [0, 1, 2, 3, 4, 5, 6] joint
+
         tar_coll = []
         act_coll = []
         plot_inter = 30
