@@ -536,7 +536,6 @@ class HW1Env(StackingEnv):
 
         obj2cam = np.eye(4)
         obj2cam[:3, 3] = obj_p
-
         obj2cam[:3, :3] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
 
         gripper_pose = np.dot(cam2base, obj2cam)
