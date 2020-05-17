@@ -53,12 +53,12 @@
       <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/modules.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/vcs.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/hw2/homework2/env/stacking_env.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/hw2/homework2/hw2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hw1/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/hw1/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hw1/homework1/env/hw1_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/hw1/homework1/env/hw1_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -71,19 +71,26 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1192">
-              <caret line="663" column="30" lean-forward="true" selection-start-line="662" selection-start-column="8" selection-end-line="663" selection-end-column="30" />
+            <state relative-caret-position="1006">
+              <caret line="858" lean-forward="true" selection-start-line="858" selection-end-line="858" />
               <folding>
+                <element signature="e#284#321#0" expanded="true" />
                 <element signature="e#722#906#0" expanded="true" />
                 <element signature="e#933#1093#0" expanded="true" />
+                <element signature="e#1246#1450#0" expanded="true" />
+                <element signature="e#1471#1728#0" expanded="true" />
+                <element signature="e#1388#1758#0" expanded="true" />
+                <element signature="e#1335#1765#0" expanded="true" />
                 <element signature="e#1376#1521#0" expanded="true" />
                 <element signature="e#1573#1910#0" expanded="true" />
                 <element signature="e#2020#2174#0" expanded="true" />
                 <element signature="e#3007#3216#0" expanded="true" />
                 <element signature="e#4374#6065#0" expanded="true" />
                 <element signature="e#6808#7891#0" expanded="true" />
-                <element signature="e#8881#9379#0" expanded="true" />
-                <element signature="e#22114#24853#0" expanded="true" />
+                <element signature="e#10181#10851#0" expanded="true" />
+                <element signature="e#28681#32790#0" expanded="true" />
+                <element signature="e#32898#34564#0" expanded="true" />
+                <element signature="e#19446#19898#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -92,7 +99,7 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hw2/homework2/hw2.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="405">
+            <state relative-caret-position="249">
               <caret line="63" column="33" lean-forward="true" selection-start-line="51" selection-start-column="6" selection-end-line="63" selection-end-column="33" />
             </state>
           </provider>
@@ -101,13 +108,14 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hw1/homework1/env/hw1_env.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="444">
-              <caret line="542" column="34" lean-forward="true" selection-start-line="542" selection-start-column="22" selection-end-line="542" selection-end-column="34" />
+            <state relative-caret-position="570">
+              <caret line="68" selection-start-line="44" selection-end-line="68" />
               <folding>
                 <element signature="e#495#669#0" expanded="true" />
                 <element signature="e#1312#1516#0" expanded="true" />
                 <element signature="e#1537#1794#0" expanded="true" />
                 <element signature="e#16805#17175#0" expanded="true" />
+                <element signature="e#17273#19501#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -143,7 +151,6 @@
       <find>debug</find>
       <find>G_Inv</find>
       <find>compute_spa</find>
-      <find>pid_forward</find>
       <find>target_pos</find>
       <find>gripper</find>
       <find>set_drive_target</find>
@@ -152,7 +159,9 @@
       <find>active_joints</find>
       <find>target_ee_pose</find>
       <find>qpos</find>
+      <find>target_qpos</find>
       <find>compute_ik</find>
+      <find>pid_forward</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -188,38 +197,7 @@
             <path>
               <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
               <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
-              <item name="hw1" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
-              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
-              <item name="hw1" type="462c0819:PsiDirectoryNode" />
-              <item name="homework1" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
-              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
-              <item name="hw1" type="462c0819:PsiDirectoryNode" />
-              <item name="homework1" type="462c0819:PsiDirectoryNode" />
-              <item name="env" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
-              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
               <item name="hw2" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
-              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
-              <item name="hw2" type="462c0819:PsiDirectoryNode" />
-              <item name="assets" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
-              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
-              <item name="hw2" type="462c0819:PsiDirectoryNode" />
-              <item name="assets" type="462c0819:PsiDirectoryNode" />
-              <item name="robot" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
@@ -364,19 +342,20 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
+    <editor active="true" />
     <layout>
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13530655" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.10722891" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.35783133" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info anchor="bottom" id="Terminal" order="8" weight="0.3421687" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.24578314" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -448,39 +427,47 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/hw2/homework2/hw2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="405">
+        <state relative-caret-position="249">
           <caret line="63" column="33" lean-forward="true" selection-start-line="51" selection-start-column="6" selection-end-line="63" selection-end-column="33" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/hw1/homework1/env/hw1_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="444">
-          <caret line="542" column="34" lean-forward="true" selection-start-line="542" selection-start-column="22" selection-end-line="542" selection-end-column="34" />
+        <state relative-caret-position="570">
+          <caret line="68" selection-start-line="44" selection-end-line="68" />
           <folding>
             <element signature="e#495#669#0" expanded="true" />
             <element signature="e#1312#1516#0" expanded="true" />
             <element signature="e#1537#1794#0" expanded="true" />
             <element signature="e#16805#17175#0" expanded="true" />
+            <element signature="e#17273#19501#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1192">
-          <caret line="663" column="30" lean-forward="true" selection-start-line="662" selection-start-column="8" selection-end-line="663" selection-end-column="30" />
+        <state relative-caret-position="1006">
+          <caret line="858" lean-forward="true" selection-start-line="858" selection-end-line="858" />
           <folding>
+            <element signature="e#284#321#0" expanded="true" />
             <element signature="e#722#906#0" expanded="true" />
             <element signature="e#933#1093#0" expanded="true" />
+            <element signature="e#1246#1450#0" expanded="true" />
+            <element signature="e#1471#1728#0" expanded="true" />
+            <element signature="e#1388#1758#0" expanded="true" />
+            <element signature="e#1335#1765#0" expanded="true" />
             <element signature="e#1376#1521#0" expanded="true" />
             <element signature="e#1573#1910#0" expanded="true" />
             <element signature="e#2020#2174#0" expanded="true" />
             <element signature="e#3007#3216#0" expanded="true" />
             <element signature="e#4374#6065#0" expanded="true" />
             <element signature="e#6808#7891#0" expanded="true" />
-            <element signature="e#8881#9379#0" expanded="true" />
-            <element signature="e#22114#24853#0" expanded="true" />
+            <element signature="e#10181#10851#0" expanded="true" />
+            <element signature="e#28681#32790#0" expanded="true" />
+            <element signature="e#32898#34564#0" expanded="true" />
+            <element signature="e#19446#19898#0" expanded="true" />
           </folding>
         </state>
       </provider>

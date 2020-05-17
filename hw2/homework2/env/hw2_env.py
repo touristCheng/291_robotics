@@ -9,6 +9,8 @@ import sapien.core as sapien
 import numpy as np
 from typing import List, Tuple, Sequence
 
+import matplotlib.pyplot as plt
+
 def Skew(w):
     skew = np.zeros((3, 3))
     skew[0, 1] = -w[2]
@@ -37,12 +39,63 @@ def RodriguesInv(R):
     w = D / np.linalg.norm(D) * theta
     return w
 
-# def G_Inv(theta, omega):
-#     term1 = 1./theta*np.eye(3)
-#     term2 = -0.5*Skew(omega)
-#     term3 = (1./theta-0.5*np.cos(0.5*theta))*np.dot(Skew(omega), Skew(omega))
-#     return term1 + term2 + term3
+def T_inv(T):
+    mat = np.eye(4)
+    mat[:3, :3] = T[:3, :3].T
+    mat[:3, 3] = -np.dot(T[:3,:3].T, T[:3, 3])
+    return mat
 
+def J_L_Inv(theta):
+    norm = np.linalg.norm(theta)
+    term1 = np.eye(3)-0.5*Skew(theta)
+    term2 = (1+np.cos(norm))/(norm**2)-1./(2*norm*np.sin(norm))
+    term3 = np.dot(Skew(theta), Skew(theta))
+    return term1+term2*term3
+
+def LogMap(T):
+    R = T[:3, :3]
+    t = T[:3, 3]
+    if np.abs(np.trace(R) - 3) < 1e-1:
+        theta = np.zeros((3, ))
+        p = t
+    else:
+        theta = RodriguesInv(R)
+        p = np.dot(J_L_Inv(theta), t).reshape((3, ))
+
+    return np.concatenate([theta, p], axis=0)
+
+def compute_pose_distance(pose1: np.ndarray, pose2: np.ndarray) -> float:
+    """You need to implement this function
+
+    A distance function in SE(3) space
+    Args:
+        pose1: transformation matrix
+        pose2: transformation matrix
+
+    Returns:
+        Distance scalar
+
+    """
+    T_diff = np.dot(T_inv(pose1), pose2)
+    vec6d = LogMap(T_diff)
+    dist = np.linalg.norm(vec6d)
+    return dist
+
+def exp_twist(twist, theta):
+    """
+    Exponential map from twist to SE(3)
+    Args:
+        twist: 6D vector
+        theta: scalar
+    Returns:
+        T: 4x4 matrix in SE(3)
+    """
+    xi_skew = np.zeros((4,4))
+    twist = twist * theta
+    xi_skew[:3,:3] = Skew(twist[:3])
+    xi_skew[:3,3] = twist[3:]
+    T = np.eye(4) + xi_skew + (1-np.cos(theta))/(theta**2)*xi_skew@xi_skew + (theta-np.sin(theta))/(theta**3)*xi_skew@xi_skew@xi_skew
+    return T
 
 class SimplePID:
     def __init__(self, kp=0.0, ki=0.0, kd=0.0):
@@ -234,23 +287,25 @@ class HW2Env(StackingEnv):
         passive_force = self.robot.compute_passive_force()
         self.robot.set_qf(passive_force)
 
-    def custom_controller(self, target_qpos: np.ndarray, pids: list, num_step: int) -> None:
+    def custom_controller(self, target_qpos: np.ndarray, pids: list) -> None:
 
         # assert qvel.size == len(self.arm_joints)
         # target_qpos = qvel * self.scene.get_timestep() + self.robot.get_drive_target()[:-2]
 
         self.robot.set_drive_target(target_qpos)
 
-        for i in range(num_step):
-            qf = self.robot.compute_passive_force(gravity=True, coriolis_and_centrifugal=True, external=True)
+        sub_step = 1
 
-            pid_qf = pid_forward(pids, target_qpos, self.robot.get_qpos(), self.scene.get_timestep())
-            qf += pid_qf
+        for i in range(sub_step):
+
+            qf = self.robot.compute_passive_force(gravity=True, coriolis_and_centrifugal=True, external=True)
+            pid_qf = pid_forward(pids, target_qpos, self.robot.get_qpos(), self.scene.get_timestep()*1./sub_step)
+            qf[:-2] += pid_qf[:-2]
+
             self.robot.set_qf(qf)
+
             self.scene.step()
             self.render()
-
-
 
     def evaluate_first_two_box(self) -> bool:
         """Evaluate whether you stack the first two boxes successfully"""
@@ -527,53 +582,7 @@ class HW2Env(StackingEnv):
         self.move_to_target_pose_with_internal_controller(target_save_pose, 100)
         self.wait_n_steps(50)
 
-
-    def place_object_with_internal_controller_debug(self, seg_id: int, target_object_position: np.ndarray) -> None:
-        """You need to implement this function
-
-        Place a specific box to a target position
-        This function do not consider rotation, so you can just assume a fixed rotation or any orientation you want
-
-        After place the box, you also need to move the gripper to some safe place. Thus when you pick up next box, it
-        will not jeopardise your previous result.
-
-        Args:
-            seg_id: segmentation id, you can get it by e.g. box.get_id()
-            target_object_position: target position of the box
-
-        """
-
-
-        # point_cloud = self.get_object_point_cloud(seg_id)
-        # cam2base = self.cam2base_gt()
-
-        safe_place = self.get_current_ee_pose()
-
-        target_position_1 = np.eye(4)
-        target_position_1[:3, :3] = safe_place[:3, :3]
-        target_position_1[:3, 3] = target_object_position
-        target_position_1[2, 3] -= 0.1
-
-        target_position_2 = target_position_1.copy()
-
-
-        target_position_2[2, 3] = safe_place[2, 3]
-
-        self.move_to_target_pose_with_internal_controller(target_position_2, 100)
-        self.wait_n_steps(200)
-
-
-        self.move_to_target_pose_with_internal_controller(target_position_1, 100)
-        self.wait_n_steps(200)
-
-        self.open_gripper()
-        self.wait_n_steps(200)
-
-        self.move_to_target_pose_with_internal_controller(safe_place, 100)
-        self.wait_n_steps(200)
-
-
-    def move_to_target_pose_with_user_controller(self, target_ee_pose: np.ndarray, num_steps: int) -> None:
+    def move_to_target_pose_with_user_controller_v1(self, target_ee_pose: np.ndarray, num_steps: int) -> None:
         """You need to implement this function
 
         Similar to self.move_to_target_pose_with_internal_controller. However, this time you need to implement your own
@@ -609,8 +618,71 @@ class HW2Env(StackingEnv):
         timestep = self.scene.get_timestep()
         executed_time = num_steps * timestep
 
+        pids = []
+        pid_parameters = [(40, 5, 2), (40, 5.0, 2), (40, 5.0, 2), (20, 5.0, 2),
+                          (5, 0.8, 2), (5, 0.8, 2), (5, 0.8, 0.4), (5, 0.8, 0.4), (5, 0.8, 0.4)]
 
-        target_qpos = np.array(self.compute_ik(target_ee_pose)[0] + [0.04, 0.04])
+        for i in range(len(pid_parameters)):
+            pids.append(SimplePID(pid_parameters[i][0], pid_parameters[i][1], pid_parameters[i][2]))
+
+
+        for t in range(num_steps):
+            cur_pos = self.get_current_ee_pose()
+            cur_R = cur_pos[:3, :3]
+            cur_t = cur_pos[:3, 3]
+            M_adj = np.zeros((6, 6))
+            M_adj[:3, :3] = cur_R
+            M_adj[3:, :3] = np.dot(Skew(cur_t), cur_R)
+            M_adj[3:, 3:] = cur_R
+
+            T_rel = np.dot(np.linalg.inv(cur_pos), target_ee_pose)
+
+            total_twist, theta = self.pose2exp_coordinate(T_rel)
+            remain_time = (num_steps - t) * self.scene.get_timestep()
+
+            delta_T = exp_twist(total_twist, theta / remain_time)
+            target_qpos = self.compute_ik(delta_T)
+
+            print(target_qpos)
+            target_qpos = target_qpos[0]
+
+            self.custom_controller(target_qpos, pids,)
+
+    def move_to_target_pose_with_user_controller_v2(self, target_ee_pose: np.ndarray, num_steps: int) -> None:
+        """You need to implement this function
+
+        Similar to self.move_to_target_pose_with_internal_controller. However, this time you need to implement your own
+        controller instead of the SAPIEN internal controller.
+
+        You can use anything you want to perform dynamically execution of the robot, e.g. PID, compute torque control
+        You can write additional class or function to help implement this function.
+        You can also use the inverse kinematics to calculate target joint position.
+        You do not need to follow the given timestep exactly if you do not know how to do that.
+
+        However, you are not allow to magically set robot's joint position and velocity using set_qpos() and set_qvel()
+        in this function. You need to control the robot by applying appropriate force on the robot like real-world.
+
+        There are two function you may need to use (optional):
+            gravity_compensation = self.robot.compute_passive_force(gravity=False, coriolis_and_centrifugal=True,
+                                                                    external=False)
+            coriolis_and_centrifugal_compensation = self.robot.compute_passive_force(gravity=False,
+                                                                                    coriolis_and_centrifugal=True,
+                                                                                    external=False)
+
+        The first function calculate how much torque each joint need to apply in order to balance the gravity
+        Similarly, the second function calculate how much torque to balance the coriolis and centrifugal force
+
+        To controller your robot actuator dynamically (actuator is mounted on each joint), you can use
+        self.robot.set_qf(joint_torque)
+        Note that joint_torque is a (9, ) vector which also includes the joint torque of two gripper
+
+        Args:
+            target_ee_pose: (4, 4) transformation of robot hand in robot base frame (ee2base)
+            num_steps: how much steps to reach to target pose, each step correspond to self.scene.get_timestep() seconds
+
+        """
+        timestep = self.scene.get_timestep()
+        executed_time = num_steps * timestep
 
         pids = []
         pid_parameters = [(40, 5, 2), (40, 5.0, 2), (40, 5.0, 2), (20, 5.0, 2),
@@ -619,8 +691,121 @@ class HW2Env(StackingEnv):
         for i in range(len(pid_parameters)):
             pids.append(SimplePID(pid_parameters[i][0], pid_parameters[i][1], pid_parameters[i][2]))
 
-        self.custom_controller(target_qpos, pids, num_steps)
 
+
+        target_qpos = self.compute_ik(target_ee_pose)[0] + [0.4, 0.4]
+
+        print(target_qpos)
+
+
+
+
+        self.custom_controller(target_qpos, pids, target_ee_pose)
+
+        # for t in range(num_steps+1):
+        #
+        #
+        #     cur_pos = self.get_current_ee_pose()
+        #     print(cur_pos)
+        #     cur_pos[2, 3] -= 0.05
+        #
+        #     target_qpos = self.compute_ik(target_ee_pose)[0] + [0.4, 0.4]
+        #
+        #     print(target_qpos)
+        #
+        #     self.custom_controller(target_qpos, pids,)
+
+    def move_to_target_pose_with_user_controller(self, target_ee_pose: np.ndarray, num_steps: int, viz=False) -> None:
+        """You need to implement this function
+
+        Similar to self.move_to_target_pose_with_internal_controller. However, this time you need to implement your own
+        controller instead of the SAPIEN internal controller.
+
+        You can use anything you want to perform dynamically execution of the robot, e.g. PID, compute torque control
+        You can write additional class or function to help implement this function.
+        You can also use the inverse kinematics to calculate target joint position.
+        You do not need to follow the given timestep exactly if you do not know how to do that.
+
+        However, you are not allow to magically set robot's joint position and velocity using set_qpos() and set_qvel()
+        in this function. You need to control the robot by applying appropriate force on the robot like real-world.
+
+        There are two function you may need to use (optional):
+            gravity_compensation = self.robot.compute_passive_force(gravity=False, coriolis_and_centrifugal=True,
+                                                                    external=False)
+            coriolis_and_centrifugal_compensation = self.robot.compute_passive_force(gravity=False,
+                                                                                    coriolis_and_centrifugal=True,
+                                                                                    external=False)
+
+        The first function calculate how much torque each joint need to apply in order to balance the gravity
+        Similarly, the second function calculate how much torque to balance the coriolis and centrifugal force
+
+        To controller your robot actuator dynamically (actuator is mounted on each joint), you can use
+        self.robot.set_qf(joint_torque)
+        Note that joint_torque is a (9, ) vector which also includes the joint torque of two gripper
+
+        Args:
+            target_ee_pose: (4, 4) transformation of robot hand in robot base frame (ee2base)
+            num_steps: how much steps to reach to target pose, each step correspond to self.scene.get_timestep() seconds
+
+        """
+        timestep = self.scene.get_timestep()
+        executed_time = num_steps * timestep
+
+        pids = []
+        pid_parameters = [(200, 120, 5), (200, 120, 5), (180, 100, 4), (400, 300, 6),
+                          (200, 300, 6), (200, 300, 6), (200, 300, 6), (0, 0, 0), (0, 0, 0)]
+
+        for i in range(len(pid_parameters)):
+            pids.append(SimplePID(pid_parameters[i][0], pid_parameters[i][1], pid_parameters[i][2]))
+
+
+        cur_qpos = self.robot.get_qpos()
+
+        #################
+        # finished [0, 1, 2, 3]
+        #todo tune pid for each joint [4, 5, 6]
+        tar_coll = []
+        act_coll = []
+        plot_inter = 30
+        joint_id = 4
+        #################
+
+        for t in range(num_steps):
+            cur_pos = self.get_current_ee_pose()
+            cur_R = cur_pos[:3, :3]
+            cur_t = cur_pos[:3, 3]
+            M_adj = np.zeros((6, 6))
+            M_adj[:3, :3] = cur_R
+            M_adj[3:, :3] = np.dot(Skew(cur_t), cur_R)
+            M_adj[3:, 3:] = cur_R
+
+            T_rel = np.dot(np.linalg.inv(cur_pos), target_ee_pose)
+
+            total_twist, theta = self.pose2exp_coordinate(T_rel)
+            remain_time = (num_steps-t) * self.scene.get_timestep()
+            delta_twist = total_twist * theta / remain_time
+            delta_twist_sp = np.dot(M_adj, delta_twist)
+            joint_v = self.compute_joint_velocity_from_twist(delta_twist_sp)
+
+
+            cur_qpos[:-2] = cur_qpos[:-2] + joint_v * timestep
+
+            self.custom_controller(cur_qpos, pids)
+
+            tar_coll.append(cur_qpos.copy())
+            act_coll.append(self.robot.get_qpos())
+
+            if t % plot_inter == 0 and viz:
+                tar_curve = np.array(tar_coll)
+                act_curve = np.array(act_coll)
+
+                plt.figure()
+                plt.plot(tar_curve[:, joint_id], 'r')
+                plt.plot(act_curve[:, joint_id], 'g')
+                plt.show()
+
+            self.step()
+            self.render()
 
 
     def pick_up_object_with_user_controller(self, seg_id: int, height: float) -> None:
@@ -646,7 +831,7 @@ class HW2Env(StackingEnv):
 
         obj2cam = np.eye(4)
         obj2cam[:3, 3] = obj_p
-        obj2cam[:3, 3] -= np.array([0, 0.08, 0.05])
+        obj2cam[:3, 3] -= np.array([0, 0.09, 0.05])
 
         obj2cam[:3, :3] = np.array([[0.13959368, -0.98842393, 0.05943362],
                                     [0.59127277, 0.13135001, 0.79570365],
@@ -657,10 +842,11 @@ class HW2Env(StackingEnv):
         target_pose_1 = target_pose_2.copy()
         target_pose_1[2, 3] = cur_pose[2, 3]
 
-        # self.move_to_target_pose_with_user_controller(target_pose_1, 200)
-        # self.wait_n_steps(200)
+        self.move_to_target_pose_with_user_controller(target_pose_1, 300)
+        self.wait_n_steps(200)
 
-        self.move_to_target_pose_with_user_controller(target_pose_2, 200)
+
+        self.move_to_target_pose_with_user_controller(target_pose_2, 300)
         self.wait_n_steps(200)
 
         self.close_gripper()
@@ -668,7 +854,7 @@ class HW2Env(StackingEnv):
 
         target_pose_3 = target_pose_2.copy()
         target_pose_3[2, 3] += height
-        self.move_to_target_pose_with_user_controller(target_pose_3, 200)
+        self.move_to_target_pose_with_user_controller(target_pose_3, 300)
         self.wait_n_steps(200)
 
 
