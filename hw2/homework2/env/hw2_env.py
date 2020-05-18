@@ -430,7 +430,7 @@ class HW2Env(StackingEnv):
         assert twist.size == 6
         # Jacobian define in SAPIEN use twist (v, \omega) which is different from the definition in the slides
         # So we perform the matrix block operation below
-        dense_jacobian = self.robot.compute_jacobian()  # (num_link * 6, dof())
+        dense_jacobian = self.robot.compute_spatial_twist_jacobian()  # (num_link * 6, dof())
         ee_jacobian = np.zeros([6, self.robot.dof - 2])  # (6, 7)
         ee_jacobian[:3, :] = dense_jacobian[self.end_effector_index * 6 - 3:self.end_effector_index * 6, :7]
         ee_jacobian[3:6, :] = dense_jacobian[(self.end_effector_index - 1) * 6:self.end_effector_index * 6 - 3, :7]
