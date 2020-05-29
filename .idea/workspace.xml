@@ -2,62 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="5af2af50-9a18-49d4-aa41-c6aeaebdbc3c" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/hw1/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/.idea/hw2.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/checkerboard/base.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/checkerboard/checkerboard.blend" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/checkerboard/checkerboard.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/checkerboard/checkerboard.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/checkerboard/one_side_marker.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/finger.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/finger.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/hand.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/hand.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link0.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link0.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link1.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link1.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link2.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link2.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link3.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link3.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link4.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link4.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link5.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link5.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link6.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link6.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link7.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/collision/link7.stl.convex.stl" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/finger.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/hand.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link0.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link1.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link2.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link3.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link4.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link5.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link6.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/franka_description/meshes/visual/link7.dae" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/panda.urdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/assets/robot/panda_checkerboard.urdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/demo.gif" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/demo.mp4" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/hw2.iml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/misc.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/modules.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/vcs.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/env/stacking_env.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/hw2/homework2/hw2.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hw1/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/hw1/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/hw1/homework1/env/hw1_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/hw1/homework1/env/hw1_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -68,70 +13,27 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-73">
-              <caret line="833" column="43" selection-start-line="833" selection-start-column="43" selection-end-line="833" selection-end-column="43" />
-              <folding>
-                <element signature="e#284#321#0" expanded="true" />
-                <element signature="e#722#906#0" expanded="true" />
-                <element signature="e#933#1093#0" expanded="true" />
-                <element signature="e#1246#1450#0" expanded="true" />
-                <element signature="e#1471#1728#0" expanded="true" />
-                <element signature="e#1388#1758#0" expanded="true" />
-                <element signature="e#1335#1765#0" expanded="true" />
-                <element signature="e#1376#1521#0" expanded="true" />
-                <element signature="e#1573#1910#0" expanded="true" />
-                <element signature="e#2020#2174#0" expanded="true" />
-                <element signature="e#3007#3216#0" expanded="true" />
-                <element signature="e#4374#6065#0" expanded="true" />
-                <element signature="e#6808#7891#0" expanded="true" />
-                <element signature="e#10181#10851#0" expanded="true" />
-                <element signature="e#28681#32790#0" expanded="true" />
-                <element signature="e#19446#19898#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/hw2/homework2/hw2.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="249">
-              <caret line="63" column="33" lean-forward="true" selection-start-line="51" selection-start-column="6" selection-end-line="63" selection-end-column="33" />
+            <state relative-caret-position="408">
+              <caret line="40" column="33" selection-start-line="40" selection-start-column="33" selection-end-line="40" selection-end-column="33" />
             </state>
           </provider>
         </entry>
       </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/hw1/homework1/env/hw1_env.py">
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="570">
-              <caret line="68" selection-start-line="44" selection-end-line="68" />
-              <folding>
-                <element signature="e#495#669#0" expanded="true" />
-                <element signature="e#1312#1516#0" expanded="true" />
-                <element signature="e#1537#1794#0" expanded="true" />
-                <element signature="e#16805#17175#0" expanded="true" />
-                <element signature="e#17273#19501#0" expanded="true" />
-              </folding>
-            </state>
+            <state relative-caret-position="-470" />
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="165">
-              <caret line="558" column="14" selection-start-line="558" selection-start-column="14" selection-end-line="558" selection-end-column="14" />
-              <folding>
-                <element signature="e#19570#19573#0" expanded="true" />
-                <element signature="e#19719#19722#0" expanded="true" />
-                <element signature="e#19887#19890#0" expanded="true" />
-                <element signature="e#20314#20317#0" expanded="true" />
-                <element signature="e#56630#56633#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="5415">
+              <caret line="581" column="14" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
             </state>
           </provider>
         </entry>
@@ -161,6 +63,8 @@
       <find>target_qpos</find>
       <find>compute_ik</find>
       <find>pid_forward</find>
+      <find>joint_id = 0</find>
+      <find>set_qf</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -186,6 +90,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -204,11 +109,17 @@
               <item name="hw2" type="462c0819:PsiDirectoryNode" />
               <item name="homework2" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="291_robotics" type="b2602c69:ProjectViewProjectNode" />
+              <item name="291_robotics" type="462c0819:PsiDirectoryNode" />
+              <item name="hw2" type="462c0819:PsiDirectoryNode" />
+              <item name="homework2" type="462c0819:PsiDirectoryNode" />
+              <item name="env" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -342,18 +253,18 @@
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13530655" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.13107823" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
-      <window_info anchor="bottom" id="Run" order="2" weight="0.57710844" />
+      <window_info anchor="bottom" id="Run" order="2" weight="0.29638556" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Version Control" order="7" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="8" visible="true" weight="0.24578314" />
+      <window_info anchor="bottom" id="Terminal" order="8" weight="0.24578314" />
       <window_info anchor="bottom" id="Event Log" order="9" side_tool="true" />
       <window_info anchor="bottom" id="Python Console" order="10" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -409,27 +320,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="558" column="14" selection-start-line="558" selection-start-column="14" selection-end-line="558" selection-end-column="14" />
-          <folding>
-            <element signature="e#19570#19573#0" expanded="true" />
-            <element signature="e#19719#19722#0" expanded="true" />
-            <element signature="e#19887#19890#0" expanded="true" />
-            <element signature="e#20314#20317#0" expanded="true" />
-            <element signature="e#56630#56633#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/hw2/homework2/hw2.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="249">
-          <caret line="63" column="33" lean-forward="true" selection-start-line="51" selection-start-column="6" selection-end-line="63" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/hw1/homework1/env/hw1_env.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="570">
@@ -444,29 +334,24 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py" />
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5415">
+          <caret line="581" column="14" selection-start-line="581" selection-start-column="14" selection-end-line="581" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/hw2/homework2/hw2.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="408">
+          <caret line="40" column="33" selection-start-line="40" selection-start-column="33" selection-end-line="40" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/hw2/homework2/env/hw2_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-73">
-          <caret line="833" column="43" selection-start-line="833" selection-start-column="43" selection-end-line="833" selection-end-column="43" />
-          <folding>
-            <element signature="e#284#321#0" expanded="true" />
-            <element signature="e#722#906#0" expanded="true" />
-            <element signature="e#933#1093#0" expanded="true" />
-            <element signature="e#1246#1450#0" expanded="true" />
-            <element signature="e#1471#1728#0" expanded="true" />
-            <element signature="e#1388#1758#0" expanded="true" />
-            <element signature="e#1335#1765#0" expanded="true" />
-            <element signature="e#1376#1521#0" expanded="true" />
-            <element signature="e#1573#1910#0" expanded="true" />
-            <element signature="e#2020#2174#0" expanded="true" />
-            <element signature="e#3007#3216#0" expanded="true" />
-            <element signature="e#4374#6065#0" expanded="true" />
-            <element signature="e#6808#7891#0" expanded="true" />
-            <element signature="e#10181#10851#0" expanded="true" />
-            <element signature="e#28681#32790#0" expanded="true" />
-            <element signature="e#19446#19898#0" expanded="true" />
-          </folding>
-        </state>
+        <state relative-caret-position="-470" />
       </provider>
     </entry>
   </component>
