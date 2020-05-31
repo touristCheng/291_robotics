@@ -9,7 +9,7 @@ import numpy as np
 from sapien.core import Pose
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import quat2axangle, qmult, qinverse
-
+import cv2
 import matplotlib.pyplot as plt
 
 class Solution(SolutionBase):
@@ -34,14 +34,14 @@ class Solution(SolutionBase):
 
         r1, r2, c1, c2, c3, c4 = env.get_agents()
 
-        # print(meta)
-        # print()
-        # print(r1.get_metadata())
-        # print()
-        # print(c1.get_metadata())
+        r1_meta = r1.get_metadata()
+        self.left_spade_id = r1_meta['link_ids'][-1]
 
-        basic_info = self.locate_bin(c4)
-        #todo locate bin, compute spade info
+        r2_meta = r2.get_metadata()
+        self.right_spade_id = r2_meta['link_ids'][-1]
+
+        self.basic_info = self.locate_bin(c4)
+        self.measured = False
 
 
         self.ps = [1000, 800, 600, 600, 200, 200, 100]
@@ -62,11 +62,16 @@ class Solution(SolutionBase):
             r1.set_action(t1, [0] * 7, pf_left)
             r2.set_action(t2, [0] * 7, pf_right)
 
+            #todo drive r2 to target pose and measure spade
+            if r1.get_observation()[0]:
+                self.measure_spade(c4)
+
             if np.allclose(r1.get_observation()[0], t1, 0.05, 0.05) and np.allclose(
-                    r2.get_observation()[0], t2, 0.05, 0.05):
+                    r2.get_observation()[0], t2, 0.05, 0.05) and self.measured:
                 self.phase = 1
                 self.counter = 0
                 self.selected_x = None
+
 
         if self.phase == 1:
             self.counter += 1
@@ -125,6 +130,9 @@ class Solution(SolutionBase):
                 self.phase = 4
                 self.counter = 0
 
+                self.freeze(c4)
+
+
         if self.phase == 4:
             self.counter += 1
             if (self.counter < 3000 / 5):
@@ -139,7 +147,9 @@ class Solution(SolutionBase):
                 self.diff_drive2(r2, 9, Pose(p, q), [4, 5, 6], [0, 0, 1, -1, 0], [0, 1, 2, 3, 4])
             elif (self.counter < 9000 / 5):
                 p = [-1, 0, 1.5]
-
+                print(p)
+                p = self.basic_info['bin_top_center']
+                print(p)
                 q = euler2quat(0, -np.pi / 1.5, 0)
                 self.diff_drive(r2, 9, Pose(p, q))
             else:
@@ -240,7 +250,46 @@ class Solution(SolutionBase):
 
         return v
 
+    def project_global_position_into_camera(self, camera, p):
+        '''
+        use this function to check the position of joint
+        #todo debug
+        :param camera:
+        :param p:
+        :return:
+        '''
+
+        cm = camera.get_metadata()
+        proj, model = cm['projection_matrix'], cm['model_matrix']
+        w, h = cm['width'], cm['height']
+
+        p_cam = np.linalg.inv(model) @ p
+        p_cam /= p_cam[3]
+
+        p_im = proj @ p_cam
+
+        p_im = (p_im + 1.) / 2.
+        p_im = p_im[:2, 0]
+
+        x = p_im[1] * w - 0.5
+        y = (1 - p_im[0]) * h - 0.5
+
+        return np.array([x, y])
+
+
+    def freeze(self, c):
+        color, depth, segmentation = c.get_observation()
+        plt.figure()
+        plt.imshow(color)
+        plt.show()
+
+
     def locate_bin(self, c):
+        '''
+        #todo use hough transform to determine the orientation of the bin
+        :param c:
+        :return:
+        '''
         color, depth, segmentation = c.get_observation()
         mask = segmentation == self.bin_id
 
@@ -275,29 +324,100 @@ class Solution(SolutionBase):
         #     axs[i].imshow(points[..., i])
         # plt.show()
 
-        z_coord = points[..., 2]
-        max_height = (z_coord * mask.astype(np.float32)).max()
+        z_coord_masked = points[..., 2] * mask.astype(np.float32)
+        max_height = z_coord_masked.max()
         #find the top regions
 
         canvas = np.zeros(depth.shape)
-        canvas[np.abs(z_coord-max_height)<0.0001] = 1
+        canvas[np.abs(z_coord_masked-max_height)<0.0001] = 255
 
-        xs, ys = np.where(canvas == 1)
-        x_in_im = np.mean(xs)
-        y_in_im = np.mean(ys)
+        edges = cv2.Canny(canvas.astype(np.uint8), 50, 150, apertureSize=5)
 
-        bin_top_center = points[int(y_in_im), int(x_in_im), :] #shape: (3, ), [x, y, z] in world frame
+        lines = cv2.HoughLinesP(edges, rho=1, theta=np.pi / 180, threshold=30, minLineLength=30, maxLineGap=10)[:, 0]
 
-        _, axs = plt.subplots(1, 3)
-        axs[0].imshow(color)
-        axs[1].imshow(mask)
-        axs[2].imshow(canvas)
-        axs[2].plot(y_in_im, x_in_im, 'g.')
+        xs, ys = np.where(canvas == 255)
+        x_in_im = np.mean(xs).astype(np.int32)
+        y_in_im = np.mean(ys).astype(np.int32)
+
+        # print(y_in_im, x_in_im)
+
+        lines = self.filter_lines(lines)
+
+        plt.imshow(color)
+        for x1, y1, x2, y2 in lines:
+            color = np.random.uniform(0., 1., (3, ))
+            plt.plot([x1, x2], [y1, y2], '.-', c=color)
+
+        plt.plot(y_in_im, x_in_im, c=(0., 1., 0.), marker='.')
         plt.show()
 
-        #todo fit bbox and calc spade info
+        bin_top_center = np.array([points[x_in_im, y_in_im, 0],
+                                   points[x_in_im, y_in_im, 1],
+                                   max_height+0.2]) #slightly higher than bin top
 
-        return {'bin_top_center': bin_top_center}
+
+        # test_p = np.ones((4, 1))
+        # test_p[:3, 0] = bin_top_center[:]
+        # print(x_in_im, y_in_im)
+        # print('verify')
+        # ori_p = self.project_global_position_into_camera(c, test_p)
+        # print(ori_p)
+
+        return {'bin_top_center': bin_top_center, }
+
+    def filter_lines(self, lines):
+        A = []
+        B = []
+
+        for ind, l in enumerate(lines):
+            if l[0] > l[2]:
+                swp = [l[2], l[3], l[0], l[1]]
+                lines[ind] = swp
+
+        vectors = list(map(lambda x: np.array([x[2]-x[0], x[3]-x[1]]), lines))
+        ref_vec = vectors[0]
+        ref_norm = np.linalg.norm(ref_vec)
+        for ind, vec in enumerate(vectors):
+            cos_theta = np.sum(vec * ref_vec, dtype=np.float32) / (ref_norm * np.linalg.norm(vec))
+            if cos_theta > 0.5:
+                A.append(lines[ind])
+            else:
+                B.append(lines[ind])
+
+        A = sorted(A, key=lambda x: x[1])
+        B = sorted(B, key=lambda x: x[1])
+
+        if B:
+            return [A[0]]+[B[0]]
+        else:
+            return A[0]
+
+    def extend_segments(self, lines, cent):
+        #todo further refine the line segments
+
+        pass
+
+
+
+    def measure_spade(self, c):
+        '''
+        use hough line transform to detect long spade side, and determine the size of spade
+
+        :param c:
+        :return:
+        '''
+        color, depth, segmentation = c.get_observation()
+        #todo detect rectangle here
+
+        _, axs = plt.subplots(2, 2)
+        axs[0, 0].imshow(color)
+        axs[1, 0].imshow(segmentation)
+        mask1 = segmentation == self.left_spade_id
+        mask2 = segmentation == self.right_spade_id
+        axs[1, 0].imshow(mask1)
+        axs[1, 1].imshow(mask2)
+        plt.show()
+        self.measured = True
 
     def pick_box(self, c):
         color, depth, segmentation = c.get_observation()
@@ -320,7 +440,7 @@ class Solution(SolutionBase):
 
 
 if __name__ == '__main__':
-    np.random.seed(10)
+    np.random.seed(2)
     env = FinalEnv()
     # env.run(Solution(), render=True, render_interval=5, debug=True)
     env.run(Solution(), render=True, render_interval=5)
