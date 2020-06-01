@@ -1,6 +1,11 @@
 # Final Project
 The final project is to test your knowledge about robotics control. You are also encouraged to introduce machine learning techniques to enhance the performance and stablitiy.
 
+## v2 updates
+1. Bug fix: box sizes are not randomized in each reset
+2. Improves robot initial position. In the original setting, the robot may be in contact with the table in its initial position, it is now lifted to avoid collision. The robot velocity is also set to 0 in initialization.
+3. Add camera matrix to the camera metadtata.
+
 ## Getting started
 Please follow the document of [SAPIEN](https://sapien.ucsd.edu/) to install the environment. Currently, only Ubuntu is fully supported. MacOS is experimentally supported and feel free to report any bug.
 ```bash
@@ -83,7 +88,7 @@ The algorithm used to generate the demo video has the following steps:
 7. Go to step 1.
 
 All these steps are far from optimal, and you should be able to create far
-better control methods than this one. We provide [baseline.py](baseline.py) as reference. Note that we use `cartesian_diff_ik` in the baseline, but `twist_diff_ik` is actually what we learn.
+better control methods than this one.
 
 ## Grading
 The assignment will be evaluated by the performance of your program (20 points) and the report (10 points).

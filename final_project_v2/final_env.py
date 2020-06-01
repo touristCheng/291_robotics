@@ -171,7 +171,8 @@ class Camera(Agent):
             'height': self.camera.get_height(),
             'fov': self.camera.get_fovy(),
             'projection_matrix': self.camera.get_projection_matrix(),
-            'model_matrix': self.camera.get_model_matrix()
+            'model_matrix': self.camera.get_model_matrix(),
+            'camera_matrix': self.camera.get_camera_matrix(),
         }
 
 
@@ -216,10 +217,10 @@ class FinalEnv(Env):
 
         self.bin = None
         self.boxes: List[sapien.Actor] = []
-        for i in range(10):
-            s = np.random.random() * 0.01 + 0.01
-            d = self.create_dice([s, s, s])
-            self.boxes.append(d)
+        # for i in range(10):
+        #     s = np.random.random() * 0.01 + 0.01
+        #     d = self.create_dice([s, s, s])
+        #     self.boxes.append(d)
 
     def step(self):
         self.scene.step()
@@ -393,6 +394,14 @@ class FinalEnv(Env):
         self.scene.remove_actor(w4)
 
     def reset(self):
+        for b in self.boxes:
+            self.scene.remove_actor(b)
+        self.boxes = []
+        for i in range(10):
+            s = np.random.random() * 0.01 + 0.01
+            d = self.create_dice([s, s, s])
+            self.boxes.append(d)
+
         self.total_box_genreated += 10
         self.local_total_timesteps = 0
         if self.left_robot:
@@ -402,10 +411,12 @@ class FinalEnv(Env):
         size = base_size + np.random.random(3) * np.array([0.01, 0.06, 0.06])
         self.left_robot = Robot(
             self.load_robot(Pose([-.5, .25, 0.6], axangle2quat([0, 0, 1], -np.pi / 2)), size))
-        self.left_robot.robot.set_qpos([1.5, 1, 0, -1, 0, 0, 0])
+        self.left_robot.robot.set_qpos([1.5, 0, 0, -1, 0, 0, 0])
+        self.left_robot.robot.set_qvel([0, 0, 0, 0, 0, 0, 0])
         self.right_robot = Robot(
             self.load_robot(Pose([-.5, -.25, 0.6], axangle2quat([0, 0, 1], np.pi / 2)), size))
-        self.right_robot.robot.set_qpos([-1.5, 1, 0, -1, 0, 0, 0])
+        self.right_robot.robot.set_qpos([-1.5, 0, 0, -1, 0, 0, 0])
+        self.right_robot.robot.set_qvel([0, 0, 0, 0, 0, 0, 0])
 
         self.create_bin([-1.2 + np.random.random() * 0.1,
                          np.random.random() * 0.2 - 0.1, 0.6],
