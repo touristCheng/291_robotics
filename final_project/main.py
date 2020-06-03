@@ -6,14 +6,12 @@
 
 from final_env import FinalEnv
 from solution import Solution
-from baseline import Solution as Baseline_Solution
 import numpy as np
 
 if __name__ == '__main__':
-    # at test time, we will use different random seeds.
-    np.random.seed(0)
+    np.random.seed(1)
     env = FinalEnv()
-    env.run(Solution(), render=True, render_interval=5, debug=True)
+    # env.run(Solution(), render=True, render_interval=5, debug=False)
     # at test time, run the following
-    # env.run(Solution())
+    env.run(Solution())
     env.close()
