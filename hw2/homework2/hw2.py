@@ -14,7 +14,7 @@ def main():
 
     # Increase this rate to a higher value if you find your visualization is too slow
     # E.g. if you are using a old mac book pro, you can do: env.render_rate = 5
-    env.render_rate = 30
+    env.render_rate = 10
     env.wait_n_steps(100)
 
     print("Press q to continue")

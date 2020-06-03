@@ -9,7 +9,8 @@ import numpy as np
 from sapien.core import Pose
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import quat2axangle, qmult, qinverse
-
+import cv2
+import matplotlib.pyplot as plt
 
 class Solution(SolutionBase):
     """
@@ -41,6 +42,13 @@ class Solution(SolutionBase):
         pf_left = f = r1.get_compute_functions()['passive_force'](True, True, False)
         pf_right = f = r2.get_compute_functions()['passive_force'](True, True, False)
 
+        for box_idx in range(10):
+            position = self.observe_box(box_idx)
+            print(box_idx)
+            print("estimated",position)
+            print("gt",env.boxes[box_idx].pose.p)
+
+        '''
         if self.phase == 0:
             t1 = [2, 1, 0, -1.5, -1, 1, -2]
             t2 = [-2, 1, 0, -1.5, 1, 1, -2]
@@ -54,6 +62,11 @@ class Solution(SolutionBase):
                 self.counter = 0
                 self.selected_x = None
 
+        if self.phase == 1:
+            print(r1.get_observation()[0])
+            print(r2.get_observation()[0])
+        '''    
+        '''
         if self.phase == 1:
             self.counter += 1
 
@@ -130,6 +143,7 @@ class Solution(SolutionBase):
             else:
                 self.phase = 0
                 # return False
+        '''
 
     def diff_drive(self, robot, index, target_pose):
         """
@@ -246,10 +260,39 @@ class Solution(SolutionBase):
 
         return False
 
+    # iterate over four cameras to get the box location
+    def observe_box(self, box_idx):
+        r1, r2, c1, c2, c3, c4 = env.get_agents()
+        # convert the box_idx in [0,9] to the id in the sim env
+        box_id = self.box_ids[box_idx]
+        for c in [c4]:
+            # read the observation from the camera
+            color, depth, segmentation = c.get_observation()
+            plt.imshow(segmentation)
+            plt.show()
+            # get the segmentation mask
+            m = np.where(segmentation == box_id)
+            if len(m[0]):
+                # get the x-y range of the mask
+                min_x = 10000
+                max_x = -1
+                min_y = 10000
+                max_y = -1
+                for y, x in zip(m[0], m[1]):
+                    min_x = min(min_x, x)
+                    max_x = max(max_x, x)
+                    min_y = min(min_y, y)
+                    max_y = max(max_y, y)
+                # get the middle pixel from the range
+                x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
+                position = self.get_global_position_from_camera(c, depth, x, y)
+                return position
+            else:
+                return False  
 
 if __name__ == '__main__':
     np.random.seed(0)
     env = FinalEnv()
-    # env.run(Solution(), render=True, render_interval=50, debug=True)
-    env.run(Solution(), render=True, render_interval=500)
+    env.run(Solution(), render=True, render_interval=5, debug=True)
+    # env.run(Solution(), render=True, render_interval=500)
     env.close()
