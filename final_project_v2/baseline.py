@@ -124,7 +124,7 @@ class Solution(SolutionBase):
                 q = euler2quat(np.pi, -np.pi / 1.5, quat2euler(q)[2])
                 self.diff_drive2(r2, 9, Pose(p, q), [4, 5, 6], [0, 0, 1, -1, 0], [0, 1, 2, 3, 4])
             elif (self.counter < 9000 / 5):
-                p = [-1, 0, 1.2]
+                p = [-1, 0, 1.5]
                 q = euler2quat(0, -np.pi / 1.5, 0)
                 self.diff_drive(r2, 9, Pose(p, q))
             else:
@@ -250,6 +250,6 @@ class Solution(SolutionBase):
 if __name__ == '__main__':
     np.random.seed(0)
     env = FinalEnv()
-    # env.run(Solution(), render=True, render_interval=50, debug=True)
-    env.run(Solution(), render=True, render_interval=500)
+    env.run(Solution(), render=True, render_interval=5, debug=True)
+    # env.run(Solution())
     env.close()
