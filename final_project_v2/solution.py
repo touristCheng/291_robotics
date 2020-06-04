@@ -140,7 +140,7 @@ def compute_pose_distance(pose1: np.ndarray, pose2: np.ndarray) -> float:
     relative_rotation = pose1[:3, :3].T @ pose2[:3, :3]
     rotation_term = np.arccos((np.trace(relative_rotation) - 1) / 2)
     translation_term = np.linalg.norm(pose1[:3, 3] - pose2[:3, 3])
-    print("Rotation term is: {}\nTranslation Term is: {}".format(rotation_term, translation_term))
+    #print("Rotation term is: {}\nTranslation Term is: {}".format(rotation_term, translation_term))
     return rotation_term + translation_term
 
 class Solution(SolutionBase):
@@ -172,14 +172,14 @@ class Solution(SolutionBase):
         self.bin_id = meta['bin_id']
         self.basic_info = {}
         self.locate_bin_bbox(c4)
-        print(self.basic_info)
+        #print(self.basic_info)
         
         # get the box location from the overhead camera
         self.box_location_update_flag = False
         self.box_state = np.zeros(10)
         self.box_location = np.zeros((10,3))
         self.update_box_state()
-        print(self.box_location)
+        #print(self.box_location)
 
     def act(self, env: FinalEnv, current_timestep: int):
         
@@ -564,21 +564,21 @@ class Solution(SolutionBase):
                 # get the middle pixel from the range
                 x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
                 position = self.get_global_position_from_camera(c, depth, x, y)
-                return position
+                return position, True
             else:
-                return False 
+                return np.ones(3)*100, False 
 
     # TODO: add inside bin judgement 
     def update_box_state(self):
         self.box_location_update_flag = False
         for box_idx in range(10):
-            box_idx_location = self.observe_box(box_idx)[:3]
+            box_idx_location, box_flag = self.observe_box(box_idx)
             # if cannot find the box
-            if box_idx_location[0] == None:
-                self.box_location[box_idx,:3] = np.one(3)*100 
+            if box_flag == False:
+                self.box_location[box_idx,:3] = np.ones(3)*100 
                 self.box_state[box_idx] = -1         
             else:
-                self.box_location[box_idx,:3] = box_idx_location
+                self.box_location[box_idx,:3] = box_idx_location[:3]
                 self.box_state[box_idx] = 0
 
     def locate_bin_bbox(self, c):
@@ -660,6 +660,6 @@ class Solution(SolutionBase):
 if __name__ == '__main__':
     np.random.seed(1)
     env = FinalEnv()
-    env.run(Solution(), render=True, render_interval=25, debug=True)
-    # env.run(Solution())
+    # env.run(Solution(), render=True, render_interval=25, debug=True)
+    env.run(Solution())
     env.close()
