@@ -9,7 +9,6 @@ import numpy as np
 from sapien.core import Pose
 from transforms3d.euler import euler2quat, quat2euler
 from transforms3d.quaternions import quat2axangle, qmult, qinverse
-from transforms3d.axangles import mat2axangle
 import cv2
 import matplotlib.pyplot as plt
 
@@ -71,7 +70,10 @@ def so32rot(rotation: np.ndarray):
     if np.isclose(rotation.trace(), 3):
         return np.zeros(3), 1
     if np.isclose(rotation.trace(), -1):
-        omega, theta = mat2axangle(rotation)
+        # omega, theta = mat2axangle(rotation)
+        theta = np.arccos((np.max([-1+1e-7,rotation.trace()]) - 1) / 2)
+        omega = 1 / 2 / np.sin(theta) * np.array(
+                [rotation[2, 1] - rotation[1, 2], rotation[0, 2] - rotation[2, 0], rotation[1, 0] - rotation[0, 1]]).T
         return omega, theta 
     theta = np.arccos((rotation.trace() - 1) / 2)
     omega = 1 / 2 / np.sin(theta) * np.array(
