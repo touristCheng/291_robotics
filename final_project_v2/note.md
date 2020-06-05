@@ -16,12 +16,13 @@ Y-axis: image plane pointing right
 Z-axis: pointing outside of the image plane  
 And the euler angle is defined by extrinsic rotations. So the rotation axis doesn't change with the pose change.  
 If we want to set the pose from 3D euler angle, the strategy should be first fixing the angle of X,Y direction. The X should always be either 0 or np.pi. When X=0, the spade is heading up and when X=np.pi the spade is heading down. The Y decide the tilting angle which is important to have object holding inside.  
-One specific setting in the baseline is having (X=np.pi, Y=np.pi/180*120, Z=?).  
-Notice the origin 
+One specific setting in the baseline is having (X=np.pi, Y=np.pi/180*120, Z=?). This pose can hold the boxes in the spade.  
+
 
 
 
 ### Running record
+np.random.seed(0)  
 running for 163.51 seconds, success on 10/10 boxes  
 success_rate=100.00%, efficiency=3.67/minute  
 running for 363.51 seconds, success on 15/20 boxes  
@@ -52,5 +53,33 @@ success_rate=70.83333333333334	efficiency=2.549999878881505
 
 
 
+np.random.seed(0)  
+running for 145.47 seconds, success on 10/10 boxes  
+success_rate=100.00%, efficiency=4.12/minute  
+running for 345.47 seconds, success on 17/20 boxes  
+success_rate=85.00%, efficiency=2.95/minute  
+running for 545.47 seconds, success on 25/30 boxes  
+success_rate=83.33%, efficiency=2.75/minute  
+running for 691.27 seconds, success on 27/40 boxes  
+success_rate=67.50%, efficiency=2.34/minute  
+running for 891.27 seconds, success on 32/50 boxes  
+success_rate=64.00%, efficiency=2.15/minute  
+running for 1084.70 seconds, success on 41/60 boxes  
+success_rate=68.33%, efficiency=2.27/minute  
+running for 1284.70 seconds, success on 45/70 boxes  
+success_rate=64.29%, efficiency=2.10/minute  
+running for 1484.70 seconds, success on 54/80 boxes  
+success_rate=67.50%, efficiency=2.18/minute  
+running for 1629.05 seconds, success on 60/90 boxes  
+success_rate=66.67%, efficiency=2.21/minute  
+running for 1829.05 seconds, success on 64/100 boxes  
+success_rate=64.00%, efficiency=2.10/minute  
+running for 1976.66 seconds, success on 74/110 boxes  
+success_rate=67.27%, efficiency=2.25/minute  
+running for 2000.00 seconds, success on 74/120 boxes  
+success_rate=61.67%, efficiency=2.22/minute  
+running for 2000.00 seconds, success on 74/120 boxes  
+success_rate=61.67%, efficiency=2.22/minute  
 
-
+With server evaluation: 
+success_rate=75.45454545454545	efficiency=2.549999878881505

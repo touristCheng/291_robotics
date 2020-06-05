@@ -235,10 +235,11 @@ class Solution(SolutionBase):
                 q = euler2quat(np.pi, -np.pi / 1.5, quat2euler(q)[2])
                 self.jacobian_drive(r2, 9, Pose(p, q))
             elif (self.counter < 9000 / 5):
-                p = [-1, -0.15, 1.18] #a milestone to control the trajectory for avoiding collision
+                # p = [-1, -0.15, 1.18] #a milestone to control the trajectory for avoiding collision
+                p = [-1, -0., 1.18] #a milestone to control the trajectory for avoiding collision
                 q = euler2quat(0, -np.pi / 3, 0)
-                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.3)
-            elif (self.counter < 15000 / 5):
+                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.4)
+            elif (self.counter < 12000 / 5):
                 cent = self.basic_info['bin_center']
                 length = self.basic_info['spade_length']
                 p = cent.copy()
@@ -246,35 +247,11 @@ class Solution(SolutionBase):
                 p[0] += length * 2.
                 #p = [-1, -0.1, 1.2]
                 q = euler2quat(0, -np.pi / 1.2, 0)
-                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.2)
+                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.4)
             else:
                 self.phase = 0
                 # return False
-            '''
-            
-            self.counter += 1
-            # middle point 1
-            if (self.counter < 3000 / 5):
-                pose = r2.get_observation()[2][9]
-                p, q = pose.p, pose.q
-                p[2] += 0.5
-                q = euler2quat(np.pi, -np.pi / 1.5, quat2euler(q)[2])
-                # q = euler2quat(0, -np.pi / 3, quat2euler(q)[2])
-                self.jacobian_drive(r2, 9, Pose(p, q))
-            # target bin location
-            elif (self.counter < 9000 / 5):
-                p = [-1, -0.1, 1.2]
-                q = euler2quat(0, -np.pi / 3, 0)
-                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.3)
-            # target bin location
-            elif (self.counter < 15000 / 5):
-                p = [-1, -0.1, 1.2]
-                q = euler2quat(0, -np.pi / 1.2, 0)
-                self.jacobian_drive(r2, 9, Pose(p, q), speed=0.3)
-            else:
-                self.phase = 0
-                # return False
-            '''
+
 
     def diff_drive(self, robot, index, target_pose):
         """
@@ -584,6 +561,6 @@ if __name__ == '__main__':
     np.random.seed(0)
     env = FinalEnv()
     # env.run(Solution(), render=True, render_interval=5, debug=True)
-    env.run(Solution(), render=True, render_interval=25)
-    # env.run(Solution())
+    # env.run(Solution(), render=True, render_interval=25)
+    env.run(Solution())
     env.close()
