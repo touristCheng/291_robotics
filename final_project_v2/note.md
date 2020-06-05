@@ -1,4 +1,4 @@
-## Random factors:
+### Random factors:
 
 Box size: [0.01, 0.02]  (1cm 2cm)
 Box location: x: [-0.1, 0.1] (-10cm 10cm) y: [-0.2, 0.2] (-20cm 20cm)  
@@ -88,7 +88,7 @@ success_rate=75.45454545454545	efficiency=2.489999881731352
 
 
 
-commit  
+commit d2f2a01
 np.random.seed(0)  
 running for 200.00 seconds, success on 1/10 boxes  
 success_rate=10.00%, efficiency=0.30/minute  
@@ -118,3 +118,34 @@ success_rate=63.64%, efficiency=2.10/minute
 With server evaluation: 
 success_rate=61.66666666666667	efficiency=2.2199998945556634
 	
+
+
+commit 
+np.random.seed(0)  
+running for 141.25 seconds, success on 9/10 boxes  
+success_rate=90.00%, efficiency=3.82/minute  
+running for 341.25 seconds, success on 14/20 boxes  
+success_rate=70.00%, efficiency=2.46/minute  
+running for 484.16 seconds, success on 21/30 boxes  
+success_rate=70.00%, efficiency=2.60/minute  
+running for 684.16 seconds, success on 26/40 boxes  
+success_rate=65.00%, efficiency=2.28/minute  
+running for 884.16 seconds, success on 26/50 boxes  
+success_rate=52.00%, efficiency=1.76/minute  
+running for 1084.16 seconds, success on 35/60 boxes  
+success_rate=58.33%, efficiency=1.94/minute  
+running for 1284.16 seconds, success on 41/70 boxes  
+success_rate=58.57%, efficiency=1.92/minute  
+running for 1484.16 seconds, success on 49/80 boxes  
+success_rate=61.25%, efficiency=1.98/minute  
+running for 1684.16 seconds, success on 56/90 boxes  
+success_rate=62.22%, efficiency=2.00/minute  
+running for 1884.16 seconds, success on 63/100 boxes  
+success_rate=63.00%, efficiency=2.01/minute  
+running for 2000.00 seconds, success on 65/110 boxes  
+success_rate=59.09%, efficiency=1.95/minute  
+running for 2000.00 seconds, success on 65/110 boxes  
+success_rate=59.09%, efficiency=1.95/minute  
+
+With server evaluation: 
+success_rate=89.23076923076924	efficiency=3.4799998347088774

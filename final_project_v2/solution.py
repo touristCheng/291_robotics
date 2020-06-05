@@ -151,7 +151,7 @@ class Solution(SolutionBase):
             self.counter += 1
 
             if (self.counter == 1):
-                '''
+                
                 selected, flag = self.pick_box(c4)
                 if flag == False:
                     return False 
@@ -163,6 +163,7 @@ class Solution(SolutionBase):
                     return False
                 else:
                     self.selected_x = selected
+                '''
 
             target_pose_left = Pose([self.selected_x, 0.5, 0.67], euler2quat(np.pi, -np.pi / 6, -np.pi / 2))
             self.diff_drive(r1, 9, target_pose_left)
@@ -175,7 +176,7 @@ class Solution(SolutionBase):
             #self.jacobian_drive(r2, 9, target_pose_right)
             
 
-            if self.counter == 3000 / 5:
+            if self.counter == 2000 / 5:
                 self.phase = 2
                 self.counter = 0
 
@@ -251,7 +252,7 @@ class Solution(SolutionBase):
                 cent = self.basic_info['bin_center']
                 length = self.basic_info['spade_length']
                 p = cent.copy()
-                p[2] += 0.15
+                #p[2] += 0.15
                 p[0] += length * 2.
                 #p = [-1, -0.1, 1.2]
                 q = euler2quat(0, -np.pi / 1.2, 0)
