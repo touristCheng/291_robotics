@@ -184,7 +184,7 @@ class Solution(SolutionBase):
         self.box_state = np.zeros(10)
         self.box_location = np.zeros((10,3))
         self.update_box_state()
-        print(self.box_location)
+        # print(self.box_location)
 
     def act(self, env: FinalEnv, current_timestep: int):
         
@@ -218,7 +218,7 @@ class Solution(SolutionBase):
             self.counter += 1
             if (self.counter == 1):
 
-                selected, done = self.pick_one(c4)
+                selected, done = self.pick_one([c1, c2, c3, c4])
                 if done:
                     return False
                 else:
@@ -247,12 +247,12 @@ class Solution(SolutionBase):
 
                 pose = r1.get_observation()[2][9]
                 p, q = pose.p, pose.q
-                p[1] = -0.07
+                p[1] = 0.02
                 self.pose_left = Pose(p, q)
 
                 pose = r2.get_observation()[2][9]
                 p, q = pose.p, pose.q
-                p[1] = 0.07
+                p[1] = -0.02
                 self.pose_right = Pose(p, q)
 
 
@@ -600,40 +600,74 @@ class Solution(SolutionBase):
 
         return False
 
-    def pick_one(self, c):
-        right_bound = -0.4
-        left_bound = 0.4
-        bottom_bound = -0.3
-        top_bound = 0.3
+    def percep_box(self, box_id, cams):
+        xs_in_w = []
+        ys_in_w = []
+        zs_in_w = []
 
-        spade_width = 0.1
-        discrete = 100
-
-        delta = (top_bound - bottom_bound)*1. /discrete
-        half_grids = int((spade_width / 2) / delta)
-
-        color, depth, segmentation = c.get_observation()
-        cnt_map = np.zeros((discrete, ))
-
-        done = True
-
-        for i in self.box_ids:
-            m = np.where(segmentation == i)
+        for c in cams:
+            color, depth, segmentation = c.get_observation()
+            m = np.where(segmentation == box_id)
             if len(m[0]):
                 min_x, max_x = np.min(m[1]), np.max(m[1])
                 min_y, max_y = np.min(m[0]), np.max(m[0])
                 x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
                 p_in_world = self.get_global_position_from_camera(c, depth, x, y)[:3]
-                x_in_w, y_in_w, z_in_w = p_in_world
+                x_wd, y_wd, z_wd = p_in_world
+                xs_in_w.append(x_wd)
+                ys_in_w.append(y_wd)
+                zs_in_w.append(z_wd)
+        if xs_in_w:
+            return True, [np.mean(xs_in_w), np.mean(ys_in_w), np.mean(zs_in_w)]
+        else:
+            return False, []
 
-                print('id: {} p: {}'.format(i, p_in_world))
-                if x_in_w > bottom_bound and x_in_w < top_bound and y_in_w < left_bound and y_in_w > right_bound:
+    def pick_one(self, cams):
+        right_bound = -0.4
+        left_bound = 0.4
+        bottom_bound = -0.4
+        top_bound = 0.4
 
+        spade_width = 0.10
+
+        delta = 0.001
+
+        # discrete = 200
+        # delta = (top_bound - bottom_bound)*1. /discrete
+
+        discrete = int((top_bound - bottom_bound) * 1. / delta)
+
+        half_grids = int((spade_width / 2) / delta)
+
+
+        cnt_map = np.zeros((discrete, ))
+
+        done = True
+
+        for i in self.box_ids:
+            # m = np.where(segmentation == i)
+            # if len(m[0]):
+            #     min_x, max_x = np.min(m[1]), np.max(m[1])
+            #     min_y, max_y = np.min(m[0]), np.max(m[0])
+            #     x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
+            #     p_in_world = self.get_global_position_from_camera(c, depth, x, y)[:3]
+            #     x_in_w, y_in_w, z_in_w = p_in_world
+
+            observe, point_ws = self.percep_box(i, cams)
+
+            if not observe:
+                print('Warning! Box {} is missing!'.format(i))
+            else:
+                print('Box ID: {} P: {}'.format(i, point_ws))
+
+            if observe:
+                x_wd, y_wd, z_wd = point_ws
+
+                if x_wd > bottom_bound and x_wd < top_bound and y_wd < left_bound and y_wd > right_bound:
                     done = False
-                    grid_id = int((x_in_w - bottom_bound)/ delta)
-
+                    grid_id = int((x_wd - bottom_bound)/ delta)
                     for k in range(grid_id - half_grids, grid_id + half_grids+1):
-                        if k > 0 and k < discrete:
+                        if k >= 0 and k < discrete:
                             cnt_map[k] += 1
 
         # print('debug cnter', cnt_map)
@@ -655,7 +689,8 @@ class Solution(SolutionBase):
             self.marks.add(pick_id)
             selected_x = bottom_bound+pick_id*delta+delta*0.5
 
-            print('selected x: ', selected_x)
+            print('Selected X: ', selected_x)
+
             return selected_x, False
 
     # Use top camera to get the box location
@@ -782,8 +817,8 @@ class Solution(SolutionBase):
     
 
 if __name__ == '__main__':
-    np.random.seed(4)
+    np.random.seed(5)
     env = FinalEnv()
-    env.run(Solution(), render=True, render_interval=25, debug=True)
+    env.run(Solution(), render=True, render_interval=25,)
     # env.run(Solution())
     env.close()
