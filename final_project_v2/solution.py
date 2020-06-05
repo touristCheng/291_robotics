@@ -121,6 +121,7 @@ class Solution(SolutionBase):
         self.locate_bin_bbox(c4)
         #print(self.basic_info)               
         self.measured = False
+        self.marks = set()
         
     def act(self, env: FinalEnv, current_timestep: int):
         r1, r2, c1, c2, c3, c4 = env.get_agents()
@@ -150,11 +151,18 @@ class Solution(SolutionBase):
             self.counter += 1
 
             if (self.counter == 1):
+                '''
                 selected, flag = self.pick_box(c4)
                 if flag == False:
                     return False 
                 self.selected_x = selected[0]
                 self.selected_y = selected[1]
+                '''
+                selected, done = self.pick_one([c1, c2, c3, c4])
+                if done:
+                    return False
+                else:
+                    self.selected_x = selected
 
             target_pose_left = Pose([self.selected_x, 0.5, 0.67], euler2quat(np.pi, -np.pi / 6, -np.pi / 2))
             self.diff_drive(r1, 9, target_pose_left)
@@ -556,6 +564,101 @@ class Solution(SolutionBase):
         self.basic_info['bin_center'] = bin_top_center
         self.basic_info['bin_orientation'] = rot
         self.basic_info['bin_corner'] = corners
+
+    def percep_box(self, box_id, cams):
+        xs_in_w = []
+        ys_in_w = []
+        zs_in_w = []
+
+        for c in cams:
+            color, depth, segmentation = c.get_observation()
+            m = np.where(segmentation == box_id)
+            if len(m[0]):
+                min_x, max_x = np.min(m[1]), np.max(m[1])
+                min_y, max_y = np.min(m[0]), np.max(m[0])
+                x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
+                p_in_world = self.get_global_position_from_camera(c, depth, x, y)[:3]
+                x_wd, y_wd, z_wd = p_in_world
+                xs_in_w.append(x_wd)
+                ys_in_w.append(y_wd)
+                zs_in_w.append(z_wd)
+        if xs_in_w:
+            return True, [np.mean(xs_in_w), np.mean(ys_in_w), np.mean(zs_in_w)]
+        else:
+            return False, []
+
+    def pick_one(self, cams):
+        right_bound = -0.4
+        left_bound = 0.4
+        bottom_bound = -0.4
+        top_bound = 0.4
+
+        spade_width = 0.10
+
+        delta = 0.001
+
+        # discrete = 200
+        # delta = (top_bound - bottom_bound)*1. /discrete
+
+        discrete = int((top_bound - bottom_bound) * 1. / delta)
+
+        half_grids = int((spade_width / 2) / delta)
+
+
+        cnt_map = np.zeros((discrete, ))
+
+        done = True
+
+        for i in self.box_ids:
+            # m = np.where(segmentation == i)
+            # if len(m[0]):
+            #     min_x, max_x = np.min(m[1]), np.max(m[1])
+            #     min_y, max_y = np.min(m[0]), np.max(m[0])
+            #     x, y = round((min_x + max_x) / 2), round((min_y + max_y) / 2)
+            #     p_in_world = self.get_global_position_from_camera(c, depth, x, y)[:3]
+            #     x_in_w, y_in_w, z_in_w = p_in_world
+
+            observe, point_ws = self.percep_box(i, cams)
+
+            #if not observe:
+            #    print('Warning! Box {} is missing!'.format(i))
+            #else:
+            #    print('Box ID: {} P: {}'.format(i, point_ws))
+
+            if observe:
+                x_wd, y_wd, z_wd = point_ws
+
+                if x_wd > bottom_bound and x_wd < top_bound and y_wd < left_bound and y_wd > right_bound:
+                    done = False
+                    grid_id = int((x_wd - bottom_bound)/ delta)
+                    for k in range(grid_id - half_grids, grid_id + half_grids+1):
+                        if k >= 0 and k < discrete:
+                            cnt_map[k] += 1
+
+        # print('debug cnter', cnt_map)
+
+        if done:
+            return None, True
+        else:
+            res = []
+            for k in range(discrete):
+                if k not in self.marks:
+                    res.append([k, cnt_map[k]])
+
+            if not res:
+                return None, True
+
+            res = sorted(res, key=lambda x: x[1], reverse=True)
+            assert res[0][1] > 0, 'must some error with the counter map.'
+            pick_id = res[0][0]
+            self.marks.add(pick_id)
+            selected_x = bottom_bound+pick_id*delta+delta*0.5
+
+            #print('Selected X: ', selected_x)
+
+            return selected_x, False
+
+
 
 if __name__ == '__main__':
     np.random.seed(0)

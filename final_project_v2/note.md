@@ -22,6 +22,7 @@ One specific setting in the baseline is having (X=np.pi, Y=np.pi/180*120, Z=?). 
 
 
 ### Running record
+commit 4e28113  
 np.random.seed(0)  
 running for 163.51 seconds, success on 10/10 boxes  
 success_rate=100.00%, efficiency=3.67/minute  
@@ -53,6 +54,7 @@ success_rate=70.83333333333334	efficiency=2.549999878881505
 
 
 
+commit 22809f3  
 np.random.seed(0)  
 running for 145.47 seconds, success on 10/10 boxes  
 success_rate=100.00%, efficiency=4.12/minute  
@@ -82,4 +84,37 @@ running for 2000.00 seconds, success on 74/120 boxes
 success_rate=61.67%, efficiency=2.22/minute  
 
 With server evaluation: 
-success_rate=75.45454545454545	efficiency=2.549999878881505
+success_rate=75.45454545454545	efficiency=2.489999881731352
+
+
+
+commit  
+np.random.seed(0)  
+running for 200.00 seconds, success on 1/10 boxes  
+success_rate=10.00%, efficiency=0.30/minute  
+running for 400.00 seconds, success on 7/20 boxes  
+success_rate=35.00%, efficiency=1.05/minute  
+running for 592.80 seconds, success on 16/30 boxes  
+success_rate=53.33%, efficiency=1.62/minute  
+running for 737.17 seconds, success on 25/40 boxes  
+success_rate=62.50%, efficiency=2.03/minute  
+running for 937.17 seconds, success on 30/50 boxes  
+success_rate=60.00%, efficiency=1.92/minute  
+running for 1137.17 seconds, success on 39/60 boxes  
+success_rate=65.00%, efficiency=2.06/minute  
+running for 1337.17 seconds, success on 45/70 boxes  
+success_rate=64.29%, efficiency=2.02/minute  
+running for 1537.17 seconds, success on 46/80 boxes  
+success_rate=57.50%, efficiency=1.80/minute  
+running for 1680.92 seconds, success on 56/90 boxes  
+success_rate=62.22%, efficiency=2.00/minute  
+running for 1880.92 seconds, success on 62/100 boxes  
+success_rate=62.00%, efficiency=1.98/minute  
+running for 2000.00 seconds, success on 70/110 boxes  
+success_rate=63.64%, efficiency=2.10/minute  
+running for 2000.00 seconds, success on 70/110 boxes  
+success_rate=63.64%, efficiency=2.10/minute  
+
+With server evaluation: 
+success_rate=61.66666666666667	efficiency=2.2199998945556634
+	
