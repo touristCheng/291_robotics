@@ -2,24 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="e709b93a-b69b-45f9-9c7e-6806ffa0c520" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/final_project.iml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/dice.obj.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/dice.obj.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link0.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link0.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link1.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link1.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link2.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link2.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link3.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link3.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link4.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link4.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link5.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link5.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link6.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link6.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link7.stl.convex.stl" beforeDir="false" afterPath="$PROJECT_DIR$/assets/robot/franka_description/meshes/collision/link7.stl.convex.stl" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/baseline.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/debug_opencv.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/final_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/final_env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/imgui.ini" beforeDir="false" afterPath="$PROJECT_DIR$/imgui.ini" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/solution.py" beforeDir="false" afterPath="$PROJECT_DIR$/solution.py" afterDir="false" />
     </list>
@@ -35,7 +18,7 @@
         <entry file="file://$PROJECT_DIR$/main.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="165">
-              <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
+              <caret line="11" column="20" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
               <folding>
                 <element signature="e#284#314#0" expanded="true" />
               </folding>
@@ -46,10 +29,76 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/solution.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="417">
-              <caret line="164" selection-start-line="164" selection-end-line="164" />
+            <state relative-caret-position="389">
+              <caret line="121" column="70" lean-forward="true" selection-start-line="121" selection-start-column="16" selection-end-line="121" selection-end-column="70" />
               <folding>
+                <element signature="e#284#328#0" expanded="true" />
                 <element signature="e#930#1617#0" expanded="true" />
+                <element signature="e#5603#6983#0" expanded="true" />
+                <element signature="e#7071#8242#0" expanded="true" />
+                <element signature="e#10005#12336#0" expanded="true" />
+                <element signature="e#12381#12428#0" expanded="true" />
+                <element signature="e#12473#13583#0" expanded="true" />
+                <element signature="e#13620#14311#0" expanded="true" />
+                <element signature="e#15089#15795#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/solution_int_controller.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="531">
+              <caret line="266" column="41" selection-start-line="266" selection-start-column="41" selection-end-line="266" selection-end-column="41" />
+              <folding>
+                <element signature="e#7158#8543#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/final_env.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="208">
+              <caret line="139" column="56" lean-forward="true" selection-start-line="139" selection-start-column="56" selection-end-line="139" selection-end-column="56" />
+              <folding>
+                <element signature="e#284#315#0" expanded="true" />
+                <element signature="e#887#912#0" expanded="true" />
+                <element signature="e#1035#1048#0" expanded="true" />
+                <element signature="e#1464#1489#0" expanded="true" />
+                <element signature="e#1784#1868#0" expanded="true" />
+                <element signature="e#1958#2103#0" expanded="true" />
+                <element signature="e#2144#2401#0" expanded="true" />
+                <element signature="e#2456#2703#0" expanded="true" />
+                <element signature="e#2787#3342#0" expanded="true" />
+                <element signature="e#3380#3622#0" expanded="true" />
+                <element signature="e#4579#4628#0" expanded="true" />
+                <element signature="e#4667#4729#0" expanded="true" />
+                <element signature="e#4770#4976#0" expanded="true" />
+                <element signature="e#5637#7520#0" expanded="true" />
+                <element signature="e#13487#14793#0" expanded="true" />
+                <element signature="e#15867#17562#0" expanded="true" />
+                <element signature="e#18821#20564#0" expanded="true" />
+                <element signature="e#20601#20657#0" expanded="true" />
+                <element signature="e#20693#21154#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="279">
+              <caret line="639" column="46" lean-forward="true" selection-start-line="639" selection-start-column="46" selection-end-line="639" selection-end-column="46" />
+              <folding>
+                <element signature="e#20246#20249#0" expanded="true" />
+                <element signature="e#21580#21583#0" expanded="true" />
+                <element signature="e#21919#21922#0" expanded="true" />
+                <element signature="e#22014#22017#0" expanded="true" />
+                <element signature="e#58873#59078#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -58,12 +107,21 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/baseline.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-405">
-              <caret line="84" selection-start-line="84" selection-end-line="84" />
+            <state relative-caret-position="465">
+              <caret line="83" column="44" selection-start-line="83" selection-start-column="44" selection-end-line="83" selection-end-column="44" />
               <folding>
                 <element signature="e#284#328#0" expanded="true" />
                 <element signature="e#534#843#1" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/debug_pose.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="291">
+              <caret line="20" column="40" selection-start-line="20" selection-start-column="40" selection-end-line="20" selection-end-column="40" />
             </state>
           </provider>
         </entry>
@@ -98,9 +156,14 @@
       <find>measure_spade</find>
       <find>free</find>
       <find>debug</find>
-      <find>target_pose</find>
       <find>basic_info</find>
       <find>spade_length</find>
+      <find>Agent</find>
+      <find>Robot</find>
+      <find>phase</find>
+      <find>js2</find>
+      <find>target_pose</find>
+      <find>joint_target</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -111,9 +174,11 @@
       <list>
         <option value="$PROJECT_DIR$/debug_opencv.py" />
         <option value="$PROJECT_DIR$/simple_solution.py" />
-        <option value="$PROJECT_DIR$/main.py" />
         <option value="$PROJECT_DIR$/baseline.py" />
+        <option value="$PROJECT_DIR$/main.py" />
+        <option value="$PROJECT_DIR$/debug_pose.py" />
         <option value="$PROJECT_DIR$/solution.py" />
+        <option value="$PROJECT_DIR$/solution_int_controller.py" />
       </list>
     </option>
   </component>
@@ -136,6 +201,17 @@
               <item name="final_project" type="b2602c69:ProjectViewProjectNode" />
               <item name="final_project" type="462c0819:PsiDirectoryNode" />
             </path>
+            <path>
+              <item name="final_project" type="b2602c69:ProjectViewProjectNode" />
+              <item name="final_project" type="462c0819:PsiDirectoryNode" />
+              <item name="assets" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="final_project" type="b2602c69:ProjectViewProjectNode" />
+              <item name="final_project" type="462c0819:PsiDirectoryNode" />
+              <item name="assets" type="462c0819:PsiDirectoryNode" />
+              <item name="robot" type="462c0819:PsiDirectoryNode" />
+            </path>
           </expand>
           <select />
         </subPane>
@@ -145,6 +221,11 @@
   <component name="PropertiesComponent">
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+  </component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+    </key>
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -158,7 +239,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.main">
+  <component name="RunManager" selected="Python.solution">
     <configuration name="baseline" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="final_project_v2" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -172,6 +253,27 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/baseline.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="debug_pose" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="final_project_v2" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/debug_pose.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -226,11 +328,13 @@
       <item itemvalue="Python.baseline" />
       <item itemvalue="Python.main" />
       <item itemvalue="Python.solution" />
+      <item itemvalue="Python.debug_pose" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.main" />
         <item itemvalue="Python.solution" />
+        <item itemvalue="Python.debug_pose" />
         <item itemvalue="Python.baseline" />
       </list>
     </recent_temporary>
@@ -259,14 +363,13 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1440" height="900" extended-state="0" />
-    <editor active="true" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" sideWeight="0.4979253" visible="true" weight="0.15010571" />
-      <window_info id="Structure" order="1" sideWeight="0.5020747" side_tool="true" visible="true" weight="0.15010571" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.4991453" visible="true" weight="0.22692037" />
+      <window_info id="Structure" order="1" sideWeight="0.50085473" side_tool="true" weight="0.15010571" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32891566" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.4192771" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.18915662" />
       <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -281,16 +384,6 @@
     </layout>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="173">
-          <caret line="1601" column="8" selection-start-line="1601" selection-start-column="8" selection-end-line="1601" selection-end-column="8" />
-          <folding>
-            <element signature="e#58372#58577#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/matplotlib/pyplot.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="205">
@@ -342,10 +435,48 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="11" column="20" selection-start-line="11" selection-start-column="20" selection-end-line="11" selection-end-column="20" />
+          <folding>
+            <element signature="e#284#314#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/debug_pose.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="291">
+          <caret line="20" column="40" selection-start-line="20" selection-start-column="40" selection-end-line="20" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/baseline.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="465">
+          <caret line="83" column="44" selection-start-line="83" selection-start-column="44" selection-end-line="83" selection-end-column="44" />
+          <folding>
+            <element signature="e#284#328#0" expanded="true" />
+            <element signature="e#534#843#1" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/solution_int_controller.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="531">
+          <caret line="266" column="41" selection-start-line="266" selection-start-column="41" selection-end-line="266" selection-end-column="41" />
+          <folding>
+            <element signature="e#7158#8543#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/final_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="201">
-          <caret line="83" column="8" selection-start-line="83" selection-start-column="8" selection-end-line="83" selection-end-column="8" />
+        <state relative-caret-position="208">
+          <caret line="139" column="56" lean-forward="true" selection-start-line="139" selection-start-column="56" selection-end-line="139" selection-end-column="56" />
           <folding>
             <element signature="e#284#315#0" expanded="true" />
             <element signature="e#887#912#0" expanded="true" />
@@ -356,11 +487,13 @@
             <element signature="e#2144#2401#0" expanded="true" />
             <element signature="e#2456#2703#0" expanded="true" />
             <element signature="e#2787#3342#0" expanded="true" />
-            <element signature="e#3669#4491#0" expanded="true" />
+            <element signature="e#3380#3622#0" expanded="true" />
             <element signature="e#4579#4628#0" expanded="true" />
             <element signature="e#4667#4729#0" expanded="true" />
             <element signature="e#4770#4976#0" expanded="true" />
             <element signature="e#5637#7520#0" expanded="true" />
+            <element signature="e#13487#14793#0" expanded="true" />
+            <element signature="e#15867#17562#0" expanded="true" />
             <element signature="e#18821#20564#0" expanded="true" />
             <element signature="e#20601#20657#0" expanded="true" />
             <element signature="e#20693#21154#0" expanded="true" />
@@ -368,33 +501,34 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/main.py">
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.7/site-packages/sapien/core/__init__.pyi">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="165">
-          <caret line="11" column="19" lean-forward="true" selection-start-line="11" selection-start-column="19" selection-end-line="11" selection-end-column="19" />
+        <state relative-caret-position="279">
+          <caret line="639" column="46" lean-forward="true" selection-start-line="639" selection-start-column="46" selection-end-line="639" selection-end-column="46" />
           <folding>
-            <element signature="e#284#314#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/baseline.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-405">
-          <caret line="84" selection-start-line="84" selection-end-line="84" />
-          <folding>
-            <element signature="e#284#328#0" expanded="true" />
-            <element signature="e#534#843#1" expanded="true" />
+            <element signature="e#20246#20249#0" expanded="true" />
+            <element signature="e#21580#21583#0" expanded="true" />
+            <element signature="e#21919#21922#0" expanded="true" />
+            <element signature="e#22014#22017#0" expanded="true" />
+            <element signature="e#58873#59078#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/solution.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="417">
-          <caret line="164" selection-start-line="164" selection-end-line="164" />
+        <state relative-caret-position="389">
+          <caret line="121" column="70" lean-forward="true" selection-start-line="121" selection-start-column="16" selection-end-line="121" selection-end-column="70" />
           <folding>
+            <element signature="e#284#328#0" expanded="true" />
             <element signature="e#930#1617#0" expanded="true" />
+            <element signature="e#5603#6983#0" expanded="true" />
+            <element signature="e#7071#8242#0" expanded="true" />
+            <element signature="e#10005#12336#0" expanded="true" />
+            <element signature="e#12381#12428#0" expanded="true" />
+            <element signature="e#12473#13583#0" expanded="true" />
+            <element signature="e#13620#14311#0" expanded="true" />
+            <element signature="e#15089#15795#0" expanded="true" />
           </folding>
         </state>
       </provider>
