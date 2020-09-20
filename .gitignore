@@ -1,1 +1,9 @@
+*__cache__
+__cache__
 *.pyc
+*.ini
+*__pycache__
+__pycache__
+*.DS_Store
+*.idea
+.idea
