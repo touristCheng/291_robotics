@@ -17,9 +17,10 @@ The goal of this assignment is to achieve:
 ![Demo](demo.gif)
 
 The starter code provides these files:
-- [hw2.py](hw2.py): run this file to debug and evaluate; not necessary to modify
-- [hw2_env.py](env/hw2_env.py): implement this file
-- [stacking_env.py](env/stacking_env.py): provide basic functions; not necessary to modify
+
+- [hw2.py](homework2/hw2.py): run this file to debug and evaluate; not necessary to modify
+- [hw2_env.py](homework2/env/hw2_env.py): implement this file
+- [stacking_env.py](homework2/env/stacking_env.py): provide basic functions; not necessary to modify
 
 ### Overview
 In this assignment, instead of implementing complex motion planning, we introduce a relative simple method to move the end-effector dynamically to a given target pose. The method should be implemented in `move_to_target_pose_with_internal_controller` following several steps:
@@ -41,6 +42,7 @@ It is relatively hard to directly control the dynamics of the robot. You will ne
 
 ### Functions to implement
 It is suggested to implement the following functions in order and the last two function is very similar to previous one.
+<<<<<<< HEAD
 - [pose2mat](env/hw2_env.py#L200)
 - [pose2exp_coordinate](env/hw2_env.py#L220)
 - [compute_joint_velocity_from_twist](env/hw2_env.py#L237)
@@ -50,6 +52,17 @@ It is suggested to implement the following functions in order and the last two f
 - [move_to_target_pose_with_user_controller](env/hw2_env.py#L322)
 - [pick_up_object_with_user_controller](env/hw2_env.py#L360)
 - [place_object_with_user_controller](env/hw2_env.py#L377)
+=======
+- [pose2mat](homework2/env/hw2_env.py#L200)
+- [pose2exp_coordinate](homework2/env/hw2_env.py#L220)
+- [compute_joint_velocity_from_twist](homework2/env/hw2_env.py#L237)
+- [move_to_target_pose_with_internal_controller](homework2/env/hw2_env.py#L264)
+- [pick_up_object_with_internal_controller](homework2/env/hw2_env.py#L288)
+- [place_object_with_internal_controller](homework2/env/hw2_env.py#L305)
+- [move_to_target_pose_with_user_controller](homework2/env/hw2_env.py#L322)
+- [pick_up_object_with_user_controller](homework2/env/hw2_env.py#L360)
+- [place_object_with_user_controller](homework2/env/hw2_env.py#L377)
+>>>>>>> sc
 
 ## Grading
 The assignment will be evaluated by running hw2.py to check the correctness.

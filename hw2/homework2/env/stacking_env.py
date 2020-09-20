@@ -52,17 +52,15 @@ class StackingEnv:
         self._windows = False
 
         self.render_rate = 1
-        self.render_step_ = 0
 
         self.step()
 
     def render(self):
-        self.render_step_ += 1
         if not self._windows:
             self._windows = True
             renderer_controller.show_window()
         self.scene.update_render()
-        if self.render_step_ % self.render_rate == 0:
+        if self.step_ % self.render_rate == 0:
             renderer_controller.render()
 
     def step(self):

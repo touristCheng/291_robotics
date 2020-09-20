@@ -8,172 +8,99 @@ from .stacking_env import StackingEnv
 import sapien.core as sapien
 import numpy as np
 from typing import List, Tuple, Sequence
-
-#######################################
-# === Some useful functions below === #
-#######################################
 import cv2
 
-def Rp2T(R,p):
-    """
-    Combine rotation and translation to SE(3)
-    Args:
-        R: SO(3) matrix
-        t: 3d vector
-    Returns:
-        T: SE(3) matrix
-    """ 
-    T = np.eye(4)    
-    T[:3,:3] = R 
-    T[:3,3] = np.squeeze(p)
-    return T
 
-def SE3inverse(T):
-    """
-    The inverse matrix for a SE(3) matrix
-    Args:
-        T: SE(3) matrix
-    Returns:
-        T_inv: SE(3) matrix
-    """     
-    R = T[:3,:3]
-    p = T[:3,3]
-    R_inv = R.transpose()
-    p_inv = -np.matmul(R_inv,p)
-    T_inv = np.eye(4)
-    T_inv[:3,:3] = R_inv 
-    T_inv[:3,3] = np.squeeze(p_inv)
-    return T_inv
+import matplotlib.pyplot as plt
+import open3d as o3d
 
-def SkewSymmetric(theta):
-    """
-    The skew-symmetric matrix for a 3D vector
-    Args:
-        theta: 3d vector
-    Returns:
-        R: 3x3 matrix
-    """
-    theta = np.squeeze(theta)        
-    R = np.array([[0,-theta[2],theta[1]],
-                [theta[2],0,-theta[0]],
-                [-theta[1],theta[0],0]])        
+def Skew(w):
+    skew = np.zeros((3, 3))
+    skew[0, 1] = -w[2]
+    skew[0, 2] = w[1]
+    skew[1, 0] = w[2]
+    skew[1, 2] = -w[0]
+    skew[2, 0] = -w[1]
+    skew[2, 1] = w[0]
+    return skew
+
+def SkewInv(skew):
+    w = np.array([skew[2, 1], skew[0, 2], skew[1, 0]])
+    return w
+
+def Rodrigues(theta, w):
+    w = w.reshape((3,))
+    w = w / np.linalg.norm(w)
+
+    skew = Skew(w)
+    R = np.eye(3, dtype=np.float32) + np.sin(theta) * skew + (1 - np.cos(theta)) * np.dot(skew, skew)
     return R
 
-def SkewSymmetricinv(R):
-    """
-    The inverse skew-symmetric from a matrix to a 3D vector
-    Args:
-        theta: 3d vector
-    Returns:
-        R: 3x3 matrix
-    """        
-    theta = np.array([R[2,1],R[0,2],R[1,0]])        
-    return theta
+def RodriguesInv(R):
+    theta = np.arccos((np.trace(R)-1.)*0.5)
+    D = np.array([R[2, 1]-R[1, 2], R[0, 2]-R[2, 0], R[1, 0]-R[0, 1]])
+    w = D / np.linalg.norm(D) * theta
+    return w
 
-def dist_SO3(rot1,rot2): 
-    """
-    The distance between two rotation matrices in SO(3)
-    Args:
-        rot1,rot2: 3x3 matrix in SO(3)
-    Returns:
-        dist: non-negative scalar
-    """ 
-    R_diff = np.matmul(rot1.transpose(),rot2)
-    dist = np.arccos(max(-1,min(1,(np.trace(R_diff)-1)/2)))
-    return dist
+def T_inv(T):
+    mat = np.eye(4)
+    mat[:3, :3] = T[:3, :3].T
+    mat[:3, 3] = -np.dot(T[:3,:3].T, T[:3, 3])
+    return mat
 
-def SO32rotvec(rot):
-    """
-    The logarithm map for SO(3)
-    Args:
-        rot: 3x3 matrix in SO(3)
-    Returns:
-        theta: 3d rotation vector
-    """     
-    norm = np.arccos((np.trace(rot)-1)/2)
-    direction = 1/(2*np.sin(norm))*np.array([rot[2,1]-rot[1,2],rot[0,2]-rot[2,0],rot[1,0]-rot[0,1]])
-    theta = direction*norm
-    theta_test = SkewSymmetricinv(norm/(2*np.sin(norm))*(rot-rot.transpose()))
-    return theta
+def J_L_Inv(theta):
+    norm = np.linalg.norm(theta)
+    term1 = np.eye(3)-0.5*Skew(theta)
+    term2 = (1+np.cos(norm))/(norm**2)-1./(2*norm*np.sin(norm))
+    term3 = np.dot(Skew(theta), Skew(theta))
+    return term1+term2*term3
 
-def J_L_inv(theta):
-    """
-    The inverse left Jacobian of a 3D rotation vector
-    Args:
-        theta: 3d vector
-    Returns:
-        R: 3x3 matrix
-    """   
-    R = np.eye(3) - 0.5*SkewSymmetric(theta) + ((1+np.cos(np.linalg.norm(theta)))/(np.linalg.norm(theta)- 1/(2*np.linalg.norm(theta)*np.sin(np.linalg.norm(theta))))**2)*np.matmul(SkewSymmetric(theta),SkewSymmetric(theta))
-    return R
-
-def rot2quatMinimal(R):
-    """
-    Convert SO(3) rotation matrix into a modified Rodrigues formula,
-    which is the image part of the associated quaternion
-    q = 2 * sin(theta/2) * v
-    Args:
-        R: 3x3 rotation matrix
-    Returns:
-        q: 3d vector
-    """
-    assert R.shape[0]==3 and R.shape[1]==3
-    m00 = R[0,0]
-    m01 = R[0,1]
-    m02 = R[0,2]
-    m10 = R[1,0]
-    m11 = R[1,1]
-    m12 = R[1,2]
-    m20 = R[2,0]
-    m21 = R[2,1]
-    m22 = R[2,2]
-    trace = np.trace(R)
-
-    if trace > 0:
-        S = np.sqrt(trace + 1.0) * 2
-        qx = (m21 - m12) / S
-        qy = (m02 - m20) / S
-        qz = (m10 - m01) / S
-    elif (m00 > m11) and (m00 > m22):
-        S = np.sqrt(1.0 + m00 - m11 - m22) * 2
-        qx = 0.25 * S
-        qy = (m01 + m10) / S
-        qz = (m02 + m20) / S
-    elif (m11 > m22):
-        S = np.sqrt(1.0 + m11 - m00 - m22) * 2
-        qx = (m01 + m10) / S
-        qy = 0.25 * S
-        qz = (m12 + m21) / S
+def LogMap(T):
+    R = T[:3, :3]
+    t = T[:3, 3]
+    if np.abs(np.trace(R) - 3) < 1e-1:
+        theta = np.zeros((3, ))
+        p = t
     else:
-        S = np.sqrt(1.0 + m22 - m00 - m11) * 2
-        qx = (m02 + m20) / S
-        qy = (m12 + m21) / S
-        qz = 0.25 * S
-    q = np.array([qx,qy,qz])
-    q *= 2
-    return q
+        theta = RodriguesInv(R)
+        p = np.dot(J_L_Inv(theta), t).reshape((3, ))
 
-def quatMinimal2rot(q):
-    """
-    Convert a modified Rodrigues formula back to SO(3) rotation matrix
-    Inverse of rot2quatMinimal()
-    Args:
-        q: 3d vector
-    Returns:
-        R: 3x3 rotation matrix
-    """   
-    q = np.squeeze(q)        
-    p = np.linalg.norm(q)**2
-    #w = np.sqrt(1 - p)
-    w = np.sqrt(4 - p)
-    diag_p = p*np.eye(3)
-    q = np.expand_dims(q,axis=1)
-    #R = np.eye(3) - 2*diag_p + 2*(np.matmul(q,q.transpose()) + w*SkewSymmetric(q))
-    R = np.eye(3) - 0.5*diag_p + 0.5*(np.matmul(q,q.transpose()) + w*SkewSymmetric(q))
-    return R
-#######################################
-# === Some useful functions above === #
-#######################################
+    return np.concatenate([theta, p], axis=0)
+
+def Vec3d2Rot(vec):
+    vec = vec.reshape((3, 1))
+    term1 = (1-np.sum(vec**2)*0.5)*np.eye(3)
+    alpha = np.sqrt(4-np.sum(vec**2))
+    mat = np.dot(vec, vec.T)
+    term2 = 0.5*(mat+alpha*Skew(vec))
+    return term1 + term2
+
+def Rot2Vec3d(R):
+    trace = np.trace(R)
+    max_diag = np.max([R[0, 0], R[1, 1], R[2, 2]])
+    if trace > 0:
+        S = np.sqrt(trace + 1.) * 2. # 4 * cos(theta / 2)
+        q1 = (R[2, 1]-R[1, 2]) / S
+        q2 = (R[0, 2]-R[2, 0]) / S
+        q3 = (R[1, 0]-R[0, 1]) / S
+    elif max_diag == R[0, 0]:
+        S = np.sqrt(1.+R[0, 0]-R[1, 1]-R[2, 2]) * 2.
+        q1 = 0.25 * S
+        q2 = (R[0, 1] + R[1, 0]) / S
+        q3 = (R[0, 2] + R[2, 0]) / S
+    elif max_diag == R[1, 1]:
+        S = np.sqrt(1.+R[1, 1]-R[0, 0]-R[2, 2]) * 2.
+        q1 = (R[0, 1]+R[1, 0]) / S
+        q2 = 0.25 * S
+        q3 = (R[1, 2]+R[2, 1]) / S
+    else:
+        S = np.sqrt(1.+R[2, 2]-R[0, 0]-R[1, 1]) * 2.
+        q1 = (R[0, 2]-R[2, 0]) / S
+        q2 = (R[1, 2]-R[2, 1]) / S
+        q3 = 0.25 * S
+    p = np.array([q1, q2, q3]) * 2.
+    return p
+
 
 class HW1Env(StackingEnv):
     def __init__(self, timestep: float):
@@ -360,15 +287,18 @@ class HW1Env(StackingEnv):
             (4, 4) transformation matrix represent the same pose
 
         """
-        # QJ
-        q_w = pose.q[0]
-        q_xyz = np.expand_dims(pose.q[1:],axis=1)
-        q_xyz_hat = SkewSymmetric(q_xyz)
-        Eq = np.hstack((-q_xyz,q_w*np.eye(3)+q_xyz_hat))
-        Gq = np.hstack((-q_xyz,q_w*np.eye(3)-q_xyz_hat))
+
         T = np.eye(4)
-        T[:3,:3] = np.matmul(Eq,Gq.transpose())
-        T[:3,3] = pose.p
+        q = pose.q
+        p = pose.p
+
+        T[:3, -1] = p
+
+        theta = 2 * np.arccos(q[0])
+        w = q[1:] / np.linalg.norm(q[1:])
+        R = Rodrigues(theta, w)
+
+        T[:3, :3] = R
         return T
 
     def get_current_marker_pose(self) -> np.ndarray:
@@ -390,47 +320,52 @@ class HW1Env(StackingEnv):
 
         pattern_size = (3, 4)
         square_size = 0.012
+        h = pattern_size[0]
+        w = pattern_size[1]
 
-        # QJ
-        # Convert the image to be 8-bit
-        image = np.array(image*255, dtype=np.uint8)
-        # Get gray-scale image
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # Define the points in world frame (3D) with square_size
-        objp = np.zeros((pattern_size[0]*pattern_size[1],3), np.float32)
-        objp[:,:2] = np.mgrid[0:pattern_size[0],0:pattern_size[1]].T.reshape(-1,2)
+        # prepare 3D points
+        objp = np.zeros((h * w, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:h, 0:w].T.reshape(-1, 2)
         objp *= square_size
-        # Detect corners in image coordiante (2D)
-        ret, corners = cv2.findChessboardCorners(gray,pattern_size,flags=cv2.CALIB_CB_ADAPTIVE_THRESH)
-        # Get known camera intrinsic parameters
+
+        image = (image * 255).astype(np.uint8)
+
+        # find 2D points
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        ret, corners = cv2.findChessboardCorners(gray.astype(np.uint8), (h, w), flags=cv2.CALIB_CB_ADAPTIVE_THRESH)
+
+        if ret == 0:
+            return False, None
+
+        #mark corners
+        # img = cv2.drawChessboardCorners(image, pattern_size, corners, ret)
+        # plt.imshow(img)
+        # plt.show()
+
         camera_matrix = self.camera.get_camera_matrix()[:3, :3]
         camera_distortion = np.zeros(4)
         # Solve a PnP problem with given intrinsic parameters
         _, rvecs, tvecs, inliers = cv2.solvePnPRansac(objp, corners, camera_matrix, camera_distortion)
-        
-        # optional visualization scripts
-        '''
-        def draw(img, corners, imgpts):
-            corner = tuple(corners[0].ravel())
-            img = cv2.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-            img = cv2.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-            img = cv2.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-            return img
-        axis = np.float32([[3,0,0], [0,3,0], [0,0,-3]]).reshape(-1,3)
-        axis *= square_size
-        imgpts, jac = cv2.projectPoints(axis, rvecs, tvecs, camera_matrix, camera_distortion)
-        img = draw(image,corners,imgpts)
-        cv2.imshow('img',img)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
-        '''
-        
-        # Define 4x4 SE(3) matrix
-        # Get the rotation (rvecs) and the translation (tvecs)
+
+        if ret == 0:
+            return False, None
+
+        tvec = np.array(tvecs).reshape((3, ))
+        rvec = np.array(rvecs).reshape((3, ))
+
+        theta = np.linalg.norm(rvec).squeeze()
+
+        if theta != 0:
+            w = rvecs / theta
+            R = Rodrigues(theta, w)
+        else:
+            R = np.eye(3)
+
         T = np.eye(4)
-        T[:3,:3],_ = cv2.Rodrigues(rvecs)
-        T[:3,3] = np.squeeze(tvecs)
-        return T
+        T[:3, :3] = R
+        T[:3, -1] = tvec
+
+        return True, T
 
     def capture_calibration_data(self) -> Tuple[List[np.ndarray], List[np.ndarray]]:
         """You need to implement this function
@@ -448,18 +383,24 @@ class HW1Env(StackingEnv):
                      [0.1, 0, 0.2, -1.4, 0, 1.3, 0.6, 0.4, 0.4],
                      [0, 0.2, -0.1, -1.5, -0.3, 1.4, 0.9, 0.4, 0.4],
                      [0.1, 0.3, 0, -1.4, -0.2, 1.7, 0.85, 0.4, 0.4]]
-        
-        # QJ
-        marker2cam_poses = []
-        ee2base_poses = []
-        for qpos in qpos_list[0:7]:
+
+        print('>> Capturing data ...')
+
+        marker2cam_coll = []
+        ee2base_coll = []
+        for t, qpos in enumerate(qpos_list):
             self.robot.set_qpos(qpos)
             self.step()
-            T_marker2cam = self.get_current_marker_pose()
-            T_ee2base = self.get_current_ee_pose()
-            marker2cam_poses.append(T_marker2cam)
-            ee2base_poses.append(T_ee2base)
-        return marker2cam_poses, ee2base_poses
+
+            flag, T_m2c = self.get_current_marker_pose()
+            T_e2b = self.get_current_ee_pose()
+
+            if flag:
+                print('Processing pair {} ...'.format(t))
+                marker2cam_coll.append(T_m2c)
+                ee2base_coll.append(T_e2b)
+
+        return marker2cam_coll, ee2base_coll
 
     @staticmethod
     def compute_cam2base(marker2cam_poses: List[np.ndarray], ee2base_poses: List[np.ndarray]) -> np.ndarray:
@@ -484,77 +425,56 @@ class HW1Env(StackingEnv):
             Transformation matrix from camera to base
 
         """
-        # QJ
-        # Paper ref: http://kmlee.gatech.edu/me6406/handeye.pdf
-        # Code ref: https://github.com/opencv/opencv/blob/master/modules/calib3d/src/calibration_handeye.cpp#L268
-        R_base2ee = []
-        p_base2ee = []
-        T_base2ee = []
-        R_marker2cam = []
-        p_marker2cam = []
-        T_marker2cam = []
-        for idx in range(len(marker2cam_poses)):
-            base2ee = SE3inverse(ee2base_poses[idx])
-            marker2cam = marker2cam_poses[idx]
-            R_base2ee.append(base2ee[:3,:3])
-            p_base2ee.append(base2ee[:3,3])
-            T_base2ee.append(Rp2T(R_base2ee[-1],p_base2ee[-1]))
-            R_marker2cam.append(marker2cam[:3,:3])
-            p_marker2cam.append(marker2cam[:3,3])
-            T_marker2cam.append(Rp2T(R_marker2cam[-1],p_marker2cam[-1]))
-        n_pairs = len(R_base2ee)
-        A1,B1,A2,B2 = [],[],[],[] 
-        # R_cg Step 1 eq (12)
-        for i in range(n_pairs):
-            for j in range(i,n_pairs):
-                # Build P_gij eq (6)
-                H_gij = np.matmul(SE3inverse(T_base2ee[j]),T_base2ee[i])
-                R_gij = H_gij[:3,:3]
-                P_gij = rot2quatMinimal(R_gij)
-                # Build P_cij eq (7)
-                H_cij = np.matmul(T_marker2cam[j],SE3inverse(T_marker2cam[i]))
-                R_cij = H_cij[:3,:3]
-                P_cij = rot2quatMinimal(R_cij)
-                # A1: left side. B1: right side
-                A1.append(SkewSymmetric(P_gij+P_cij))
-                B1.append(np.expand_dims(P_cij-P_gij,axis=1))
-        A1 = np.vstack(A1)
-        B1 = np.vstack(B1)
-        # pseudo-inverse solution
-        #P_cg_prime = np.linalg.inv((A1.transpose() @ A1)) @ A1.transpose() @ B1
-        # numpy least-squares
-        P_cg_prime = np.linalg.lstsq(A1,B1,rcond=None)[0]
-        # R_cg Step 3 eq (14)
-        P_cg = 2*P_cg_prime/np.sqrt(1+P_cg_prime.transpose()@P_cg_prime)
-        R_cg = quatMinimal2rot(P_cg)
-        # T_cg eq (15)
-        for i in range(n_pairs):
-            for j in range(i,n_pairs):
-                H_gij = np.matmul(SE3inverse(T_base2ee[j]),T_base2ee[i])
-                R_gij = H_gij[:3,:3]
-                T_gij = np.expand_dims(H_gij[:3,3],axis=1)
-                H_cij = np.matmul(T_marker2cam[j],SE3inverse(T_marker2cam[i]))
-                T_cij = np.expand_dims(H_cij[:3,3],axis=1)
-                # A2: left side. B2: right side
-                A2.append(R_gij-np.eye(3))
-                B2.append(R_cg@T_cij-T_gij)
-        A2 = np.vstack(A2)
-        B2 = np.vstack(B2)
-        # numpy least-squares
-        T_cg = np.linalg.lstsq(A2,B2,rcond=None)[0]
-        # Build SE(3) matrix
-        T = np.eye(4)
-        T[:3,:3] = R_cg
-        T[:3,3] = np.squeeze(T_cg)
-        
-        # OpenCV implementation
-        '''
-        R_cam2base,t_cam2base =	cv2.calibrateHandEye(R_base2ee,p_base2ee,R_marker2cam,p_marker2cam,method=cv2.CALIB_HAND_EYE_TSAI)
-        T = np.eye(4)
-        T[:3,:3] = R_cam2base
-        T[:3,3] = np.squeeze(t_cam2base)
-        '''
 
+        def Tsai_sol(ABs):
+
+            a = []
+            b = []
+
+            for (A, B) in ABs:
+                R_a = A[:3, :3].copy()
+                n_a = Rot2Vec3d(R_a)
+                R_b = B[:3, :3].copy()
+                n_b = Rot2Vec3d(R_b)
+                a.append(Skew(n_a+n_b))
+                b.append(n_a-n_b)
+
+            a = np.concatenate(a, axis=0)
+            b = np.concatenate(b, axis=0)
+            n = np.linalg.lstsq(a, b, rcond=None)[0]
+
+            n_x = 2 * n / np.sqrt(1 + np.sum(n**2))
+            if n_x[2] < 0:
+                n_x *= -1
+            R = Vec3d2Rot(n_x)
+
+            a_2 = []
+            b_2 = []
+            for (A, B) in ABs:
+                t_a = A[:3, 3].copy()
+                R_a = A[:3, :3].copy()
+                a_2.append(R_a - np.eye(3))
+
+                t_b = B[:3, 3].copy()
+                b_2.append(np.dot(R, t_b)-t_a)
+            a_2 = np.concatenate(a_2, axis=0)
+            b_2 = np.concatenate(b_2, axis=0)
+            t = np.linalg.lstsq(a_2, b_2, rcond=None)[0]
+
+            T = np.eye(4)
+            T[:3, :3] = R
+            T[:3, 3] = t
+            return T
+
+        pairs = []
+        for i in range(len(marker2cam_poses)):
+            for j in range(i+1, len(marker2cam_poses)):
+
+                A = np.dot(ee2base_poses[j], T_inv(ee2base_poses[i]))
+                B = np.dot(marker2cam_poses[j], T_inv(marker2cam_poses[i]))
+                pairs.append([A, B])
+
+        T = Tsai_sol(pairs)
         return T
 
     @staticmethod
@@ -570,19 +490,10 @@ class HW1Env(StackingEnv):
             Distance scalar
 
         """
-        # QJ
-        T_diff = np.matmul(np.linalg.inv(pose1),pose2)
-        R_diff = T_diff[:3,:3]
-        p_diff = T_diff[:3,3]
-        # edge cases: R_diff approx identity
-        if np.abs(np.trace(R_diff)-3) < 1e-1:
-            theta = np.zeros(3)
-            rho = p_diff
-        else:
-            theta = SO32rotvec(R_diff)
-            rho = np.matmul(J_L_inv(theta),p_diff)
-        dist = np.linalg.norm(np.hstack((theta,rho)))
-        return dist 
+        T_diff = np.dot(T_inv(pose1), pose2)
+        vec6d = LogMap(T_diff)
+        dist = np.linalg.norm(vec6d)
+        return dist
 
     def compute_grasp_qpos(self, cam2base: np.ndarray, seg_id: int) -> Sequence[float]:
         """You need to implement this function
@@ -615,25 +526,19 @@ class HW1Env(StackingEnv):
 
 
         """
-        # QJ
-        self.robot.set_qpos([-0.144,0.263,0.176,-2.641,0.048,2.774,0.624,0.04,0.04])
-        self.step()
-        #print(SE3inverse(cam2base)@self.get_current_ee_pose())
-
-        # Get object point cloud
         point_cloud = self.get_object_point_cloud(seg_id)
-        # Simply get the mean of the point cloud
-        obj_p = np.mean(point_cloud,axis=1)
+
+        obj_p = np.mean(point_cloud, axis=1)
+        # manually tested with different offsets
+        obj_p[0] -= 0.0
+        obj_p[1] -= 0.0
+        obj_p[2] -= 0.08
+
         obj2cam = np.eye(4)
-        obj2cam[:3,3] = obj_p
-        # manually tested with different R and p offsets
-        #obj2cam[:3,:3] = np.array([[0,-1,0],[1,0,0],[0,0,1]])
-        #obj2cam[:3,3] -= np.array([0,0,0.095])
-        obj2cam[:3,:3] = np.array([[ 0.13959368, -0.98842393,  0.05943362],
-                                [ 0.59127277,  0.13135001,  0.79570365],
-                                [-0.79429889, -0.07593369,  0.6027636]])
-        obj2cam[:3,3] -= np.array([0,0.08,0.05])
-        gripper_pose = cam2base@obj2cam
+        obj2cam[:3, 3] = obj_p
+        obj2cam[:3, :3] = np.array([[0, -1, 0], [1, 0, 0], [0, 0, 1]])
+
+        gripper_pose = np.dot(cam2base, obj2cam)
         qpos = self.compute_ik(gripper_pose)[0]
         qpos = qpos + [0.04, 0.04]
         return qpos
