@@ -3,7 +3,7 @@
 ## Requirements
 * python 3.7
 * sapien
-* numpy
+* transforms3d
 * opencv-python
 * ikfast-pybind
 
