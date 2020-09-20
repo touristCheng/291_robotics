@@ -1,0 +1,6 @@
+*__cache__
+*.pyc
+*.ini
+*__pycache__
+*.DS_Store
+*.idea

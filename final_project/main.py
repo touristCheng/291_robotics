@@ -11,7 +11,7 @@ import numpy as np
 if __name__ == '__main__':
     np.random.seed(0)
     env = FinalEnv()
-    # env.run(Solution(), render=True, render_interval=5, debug=False)
+    # env.run(Solution(), render=True, render_interval=5, debug=True)
     # at test time, run the following
     env.run(Solution())
     env.close()

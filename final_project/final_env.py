@@ -484,6 +484,7 @@ class FinalEnv(Env):
         """
         if debug:
             self.reset()
+            solution.init(self)
             while not self.renderer_controller.should_quit:
                 if solution.act(self, self.local_total_timesteps) == False:
                     break
